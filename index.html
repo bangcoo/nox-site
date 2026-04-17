@@ -1,943 +1,1393 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>NOX.ventures | Sovereign Terminal</title>
-<link rel="icon" type="image/png" href="favicon.png"/>
-<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Inter', sans-serif;
-    background-color: #008080;
-    height: 100vh;
-    overflow: hidden;
-    cursor: default;
-    user-select: none;
-  }
-
-  .material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  }
-
-  /* ── Bevels ── */
-  .bevel-out {
-    border-top: 2px solid #ffffff;
-    border-left: 2px solid #ffffff;
-    border-right: 2px solid #808080;
-    border-bottom: 2px solid #808080;
-  }
-  .bevel-in {
-    border-top: 2px solid #808080;
-    border-left: 2px solid #808080;
-    border-right: 2px solid #ffffff;
-    border-bottom: 2px solid #ffffff;
-  }
-  .bevel-btn {
-    border-top: 2px solid #ffffff;
-    border-left: 2px solid #ffffff;
-    border-right: 2px solid #5d5e5f;
-    border-bottom: 2px solid #5d5e5f;
-    background: #c0c0c0;
-    cursor: pointer;
-  }
-  .bevel-btn:active {
-    border-top: 2px solid #5d5e5f;
-    border-left: 2px solid #5d5e5f;
-    border-right: 2px solid #ffffff;
-    border-bottom: 2px solid #ffffff;
-  }
-
-  /* ── Title Bar ── */
-  .title-bar {
-    background: linear-gradient(90deg, #00003c 0%, #000080 100%);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 3px 4px;
-    cursor: move;
-    flex-shrink: 0;
-  }
-  .title-bar-text {
-    color: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-  }
-  .win-controls { display: flex; gap: 2px; flex-shrink: 0; }
-  .win-btn {
-    width: 16px; height: 14px;
-    font-size: 10px; font-weight: 900;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; line-height: 1;
-  }
-
-  /* ── Windows ── */
-  .win {
-    position: absolute;
-    background: #c0c0c0;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 12px 32px rgba(26,28,28,0.22);
-    min-height: 0; /* 确保 flex 子元素可以收缩 */
-  }
-  .win.hidden { display: none; }
-  .win-body { 
-    background: #eeeeee; 
-    flex: 1; 
-    overflow: auto;
-    min-height: 0; /* 确保内容可以滚动 */
-  }
-
-  /* ── Menu bar / Status bar ── */
-  .win-menubar {
-    background: #c0c0c0;
-    border-bottom: 2px solid #808080;
-    padding: 2px 6px;
-    font-size: 10px; font-weight: 700;
-    display: flex; gap: 14px; flex-shrink: 0;
-  }
-  .win-menubar span { padding: 1px 4px; cursor: pointer; }
-  .win-menubar span:hover { background: #000080; color: #fff; }
-  .win-statusbar {
-    background: #c0c0c0;
-    border-top: 2px solid #808080;
-    padding: 2px 8px;
-    font-size: 9px; font-weight: 700; color: #5d5e5f;
-    display: flex; justify-content: space-between; flex-shrink: 0;
-  }
-
-  /* ── Taskbar ── */
-  #taskbar {
-    position: fixed;
-    bottom: 0; left: 0; right: 0; height: 32px;
-    background: #c0c0c0;
-    border-top: 2px solid #ffffff;
-    display: flex; align-items: center; padding: 2px 4px; gap: 4px;
-    z-index: 9999;
-  }
-  .tb-sep {
-    width: 2px; height: 22px;
-    border-left: 1px solid #808080;
-    border-right: 1px solid #fff;
-    flex-shrink: 0;
-  }
-  .ticker-label { color: #00003c; font-size: 9px; font-weight: 900; }
-  .ticker-val   { font-size: 10px; font-weight: 700; }
-  .ticker-up    { color: #006400; }
-  .ticker-dn    { color: #8b0000; }
-
-  /* ── Start Menu ── */
-  #start-menu {
-    position: fixed; bottom: 32px; left: 0;
-    width: 230px; background: #c0c0c0;
-    border-top: 2px solid #fff; border-left: 2px solid #fff;
-    border-right: 2px solid #808080; border-bottom: 2px solid #808080;
-    z-index: 10000; display: none; flex-direction: column;
-  }
-  #start-menu.open { display: flex; }
-  .sm-strip {
-    background: linear-gradient(180deg, #00003c 0%, #000080 100%);
-    writing-mode: vertical-rl; transform: rotate(180deg);
-    color: #fff; font-size: 15px; font-weight: 900; letter-spacing: .12em;
-    position: absolute; left: 0; top: 0; bottom: 0; width: 26px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .sm-body { margin-left: 26px; }
-  .sm-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 7px 10px; font-size: 11px; font-weight: 700;
-    cursor: pointer; color: #000;
-  }
-  .sm-item:hover { background: #000080; color: #fff; }
-  .sm-icon { font-size: 18px; color: #00003c; flex-shrink: 0; }
-  .sm-item:hover .sm-icon { color: #fff; }
-  .sm-divider { height: 2px; background: #808080; border-bottom: 1px solid #fff; margin: 2px 0; }
-
-  /* ── Typing cursor ── */
-  .cursor {
-    display: inline-block; width: 8px; height: 14px;
-    background: #00003c; margin-left: 2px;
-    animation: blink 1s step-end infinite; vertical-align: middle;
-  }
-  @keyframes blink { from,to{opacity:1} 50%{opacity:0} }
-
-  /* ── Desktop icons ── */
-  .desk-icon {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 3px; width: 68px; cursor: pointer; padding: 4px;
-  }
-  .desk-icon:hover .icon-label { background: #000080; color: #fff; }
-  .icon-label {
-    font-size: 10px; font-weight: 700; color: #fff;
-    text-align: center; padding: 1px 3px;
-    text-shadow: 1px 1px 0 #000, -1px 0 0 #000;
-    line-height: 1.3;
-  }
-
-  /* ── Portfolio icons ── */
-  .port-icon-wrap {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 4px; padding: 10px 8px; cursor: pointer;
-    text-decoration: none; color: #000;
-  }
-  .port-icon-wrap:hover .port-icon-bg { background: #000080; }
-  .port-icon-wrap:hover .port-name    { background: #000080; color: #fff; outline: 1px dotted #fff; }
-  .port-icon-bg {
-    width: 48px; height: 48px;
-    background: #eeeeee;
-    border-top: 2px solid #fff; border-left: 2px solid #fff;
-    border-right: 2px solid #808080; border-bottom: 2px solid #808080;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden;
-  }
-  .port-icon-img { width: 38px; height: 38px; object-fit: contain; }
-  .port-name {
-    font-size: 9px; font-weight: 700; text-align: center;
-    max-width: 64px; word-break: break-word; padding: 1px 2px; line-height: 1.2;
-  }
-
-  /* ── Services ── */
-  .svc-row {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 12px 16px;
-  }
-  .svc-row:nth-child(odd)  { background: #faf9f9; }
-  .svc-row:nth-child(even) { background: #eeeeee; }
-  .svc-icon { font-size: 20px; color: #00003c; flex-shrink: 0; margin-top: 1px; }
-  .svc-title { font-size: 11px; font-weight: 900; color: #00003c; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 3px; }
-  .svc-desc  { font-size: 10px; color: #464653; line-height: 1.6; }
-
-  /* ── Contact ── */
-  .contact-btn {
-    display: flex; align-items: center; gap: 16px;
-    padding: 16px 20px; text-decoration: none; color: #000; cursor: pointer;
-  }
-  .contact-btn:nth-child(odd)  { background: #faf9f9; }
-  .contact-btn:nth-child(even) { background: #eeeeee; }
-  .contact-btn:hover { background: #000080; color: #fff; }
-  .contact-label { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
-  .contact-sub   { font-size: 10px; opacity: .7; margin-top: 3px; }
-
-  /* ── NOX ASCII art (from PDF cover) ── */
-  #nox-ascii-bg {
-    position: fixed; inset: 0; bottom: 32px;
-    background: url('images/nox-bg.jpeg') center center / cover no-repeat;
-    opacity: 0.07;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── Scrollbar Win98 ── */
-  ::-webkit-scrollbar { width: 16px; height: 16px; }
-  ::-webkit-scrollbar-track { background: #c0c0c0; }
-  ::-webkit-scrollbar-thumb { background: #c0c0c0; border-top:2px solid #fff; border-left:2px solid #fff; border-right:2px solid #808080; border-bottom:2px solid #808080; }
-
-  /* ── 最大化窗口优化 ── */
-  .win[data-mx="1"] {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-  
-  .win[data-mx="1"] .win-body {
-    flex: 1 1 auto !important;
-    overflow-y: auto !important;
-    min-height: 0 !important;
-  }
-
-  /* ── Mobile Responsive ── */
-  @media (max-width: 768px) {
-    body { overflow-x: hidden; }
-    
-    /* 调整窗口大小和位置 */
-    .win {
-      width: 95% !important;
-      max-width: none !important;
-      left: 2.5% !important;
-      right: 2.5% !important;
-      height: auto !important;
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>NOX.ventures</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    
-    /* Terminal 窗口 */
-    #terminal-win {
-      bottom: 44px !important;
-      width: 95% !important;
-      left: 2.5% !important;
-      max-height: 40vh !important;
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #008080;
+      height: 100vh;
+      overflow: hidden;
+      cursor: default;
+      user-select: none;
     }
-    
-    /* Portfolio 窗口 */
-    #portfolio-win {
-      top: 50px !important;
-      width: 95% !important;
-      left: 2.5% !important;
-      max-height: calc(100vh - 100px) !important;
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
-    
-    /* Contact 窗口 */
-    #contact-win {
-      top: 50px !important;
-      width: 95% !important;
-      left: 2.5% !important;
-      max-height: calc(100vh - 100px) !important;
+
+    /* ── Bevels ── */
+    .bevel-out {
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #808080;
+      border-bottom: 2px solid #808080;
     }
-    
-    /* About 窗口 - 移动端优化 */
-    #about-win {
-      top: 50px !important;
-      width: 95% !important;
-      left: 2.5% !important;
-      max-height: calc(100vh - 100px) !important;
+
+    .bevel-in {
+      border-top: 2px solid #808080;
+      border-left: 2px solid #808080;
+      border-right: 2px solid #ffffff;
+      border-bottom: 2px solid #ffffff;
     }
-    
-    /* About 窗口内容优化 */
-    #about-win .win-body > div:first-child {
-      padding: 16px 16px 12px !important;
+
+    .bevel-btn {
+      border-top: 2px solid #ffffff;
+      border-left: 2px solid #ffffff;
+      border-right: 2px solid #5d5e5f;
+      border-bottom: 2px solid #5d5e5f;
+      background: #c0c0c0;
+      cursor: pointer;
     }
-    
-    #about-win .win-body > div:first-child > div:last-child > div:nth-child(2) {
-      font-size: 18px !important;
-      line-height: 1.15 !important;
+
+    .bevel-btn:active {
+      border-top: 2px solid #5d5e5f;
+      border-left: 2px solid #5d5e5f;
+      border-right: 2px solid #ffffff;
+      border-bottom: 2px solid #ffffff;
     }
-    
-    #about-win .win-body > div:nth-child(2) {
-      padding: 16px 16px 12px !important;
+
+    /* ── Title Bar ── */
+    .title-bar {
+      background: linear-gradient(90deg, #00003c 0%, #000080 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 4px;
+      cursor: move;
+      flex-shrink: 0;
     }
-    
-    #about-win .win-body p {
-      font-size: 11px !important;
-      line-height: 1.65 !important;
-    }
-    
-    /* Portfolio 网格调整为单列 */
-    .port-grid {
-      grid-template-columns: 1fr !important;
-      gap: 12px !important;
-    }
-    
-    /* Contact 项目调整 */
-    .contact-item {
-      padding: 8px !important;
-    }
-    
-    /* 字体大小微调 */
+
     .title-bar-text {
-      font-size: 10px !important;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
     }
-    
-    .win-menubar {
-      font-size: 9px !important;
-    }
-    
-    /* Terminal 文字 */
-    #terminal-win .win-body {
-      font-size: 9px !important;
-    }
-  }
 
-  @media (max-width: 480px) {
-    /* 更小屏幕优化 */
-    .port-card {
-      padding: 10px !important;
-    }
-    
-    .port-name {
-      font-size: 12px !important;
-    }
-    
-    .port-desc {
-      font-size: 9px !important;
-    }
-    
     .win-controls {
-      gap: 1px !important;
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
     }
-    
+
     .win-btn {
-      width: 14px !important;
-      height: 12px !important;
-      font-size: 9px !important;
+      width: 16px;
+      height: 14px;
+      font-size: 10px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
     }
-  }
-</style>
-<link rel="stylesheet" href="css/styles.css"/></head>
-<body>
 
-<!-- NOX ASCII background (from PDF) -->
-<div id="nox-ascii-bg"></div>
+    /* ── Windows ── */
+    .win {
+      position: absolute;
+      background: #c0c0c0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 32px rgba(26, 28, 28, 0.22);
+      min-height: 0;
+      /* 确保 flex 子元素可以收缩 */
+    }
 
-<!-- ═══ DESKTOP ICONS ═══ -->
-<div style="position:fixed;inset:0;bottom:32px;padding:14px 0 0 10px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;z-index:10;pointer-events:none;">
+    .win.hidden {
+      display: none;
+    }
 
-  <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('about-win')" onclick="selIcon(this)">
-    <svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(1px 1px 0 #000)">
-      <!-- Monitor body -->
-      <rect x="4" y="3" width="30" height="22" rx="2" fill="#c0c0c0" stroke="#fff" stroke-width="1"/>
-      <rect x="4" y="3" width="30" height="22" rx="2" fill="none" stroke="#808080" stroke-width="1" stroke-dasharray="0" style="stroke-dashoffset:0"/>
-      <!-- Screen bezel -->
-      <rect x="6" y="5" width="26" height="17" rx="1" fill="#808080"/>
-      <!-- Screen (blue desktop) -->
-      <rect x="7" y="6" width="24" height="15" fill="#000080"/>
-      <!-- Screen shine -->
-      <rect x="7" y="6" width="24" height="4" fill="#0000aa" opacity="0.5"/>
-      <!-- Monitor base neck -->
-      <rect x="16" y="25" width="6" height="4" fill="#808080"/>
-      <!-- Monitor stand/base -->
-      <rect x="11" y="29" width="16" height="3" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
-      <!-- System unit (tower) below - small box -->
-      <rect x="13" y="33" width="12" height="4" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
-      <!-- Floppy slot -->
-      <rect x="15" y="34" width="5" height="1" fill="#808080"/>
-      <!-- Power LED -->
-      <circle cx="23" cy="35" r="0.7" fill="#00cc00"/>
-    </svg>
-    <div class="icon-label">About us</div>
-  </div>
+    .win-body {
+      background: #eeeeee;
+      flex: 1;
+      overflow: auto;
+      min-height: 0;
+      /* 确保内容可以滚动 */
+    }
 
-  <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('services-win')" onclick="selIcon(this)">
-    <svg width="38" height="38" style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000)" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="m741-600-44-96-96-44 96-44 44-96 44 96 96 44-96 44-44 96Zm80 280-32-68-68-32 68-32 32-68 32 68 68 32-68 32-32 68ZM301-80l-12-94q-7-3-15-8t-13-10l-88 38-99-174 75-56v-32l-75-56 99-174 88 38q5-5 13-10t15-8l12-94h200l12 94q7 3 15 8t13 10l88-38 99 174-75 56v32l75 56-99 174-88-38q-5 5-13 10t-15 8l-12 94H301Zm185-235q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35ZM371-160h60l8-72q29-8 49.5-20.5T529-286l66 30 28-50-58-44q8-23 8-50t-8-50l58-44-28-50-66 30q-20-21-40.5-33.5T439-568l-8-72h-60l-8 72q-29 8-49.5 20.5T273-514l-66-30-28 50 58 44q-8 23-8.5 50t8.5 50l-58 44 28 50 66-30q20 21 40.5 33.5T363-232l8 72Zm30-240Z"/></svg>
-    <div class="icon-label">Services</div>
-  </div>
+    /* ── Menu bar / Status bar ── */
+    .win-menubar {
+      background: #c0c0c0;
+      border-bottom: 2px solid #808080;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      gap: 14px;
+      flex-shrink: 0;
+    }
 
-  <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('portfolio-win')" onclick="selIcon(this)">
-    <svg width="38" height="38" style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000);font-variation-settings:'FILL' 1;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z"/></svg>
-    <div class="icon-label">Portfolio</div>
-  </div>
+    .win-menubar span {
+      padding: 1px 4px;
+      cursor: pointer;
+    }
 
-  <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('insights-win')" onclick="selIcon(this)">
-    <svg width="38" height="38" style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000);font-variation-settings:'FILL' 1;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
-    <div class="icon-label">Insights</div>
-  </div>
+    .win-menubar span:hover {
+      background: #000080;
+      color: #fff;
+    }
 
-  <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('contact-win')" onclick="selIcon(this)">
-    <svg width="38" height="38" style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000)" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z"/></svg>
-    <div class="icon-label">Contact</div>
-  </div>
+    .win-statusbar {
+      background: #c0c0c0;
+      border-top: 2px solid #808080;
+      padding: 2px 8px;
+      font-size: 9px;
+      font-weight: 700;
+      color: #5d5e5f;
+      display: flex;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
 
-</div>
+    /* ── Taskbar ── */
+    #taskbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 32px;
+      background: #c0c0c0;
+      border-top: 2px solid #ffffff;
+      display: flex;
+      align-items: center;
+      padding: 2px 4px;
+      gap: 4px;
+      z-index: 9999;
+    }
 
-<!-- ═══ WINDOW: ABOUT Us ═══ -->
-<div class="win bevel-out" id="about-win" style="left:100px;top:28px;width:610px;z-index:200;max-height:calc(100vh - 60px);">
-  <div class="title-bar" id="about-win-tb">
-    <div class="title-bar-text">
-      <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
-      About us — NOX.Ventures
-    </div>
-    <div class="win-controls">
-      <button class="bevel-btn win-btn" onclick="minimizeWin('about-win')">_</button>
-      <button class="bevel-btn win-btn" onclick="maximizeWin('about-win')">□</button>
-      <button class="bevel-btn win-btn" onclick="closeWin('about-win')">✕</button>
-    </div>
-  </div>
-  <div class="win-menubar"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
-  <div class="win-body" style="padding:0;">
+    .tb-sep {
+      width: 2px;
+      height: 22px;
+      border-left: 1px solid #808080;
+      border-right: 1px solid #fff;
+      flex-shrink: 0;
+    }
 
-    <!-- Dark NOX header with ASCII texture -->
-    <div style="background:#00003c;padding:20px 24px 16px;position:relative;overflow:hidden;">
-      <div style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;"></div>
-      <div style="position:relative;z-index:1;">
-        <div style="font-size:9px;font-weight:700;color:#6666bb;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px;">NOX.VENTURES // EST. 2025</div>
-        <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-.02em;line-height:1.08;text-transform:uppercase;">FULL-LIFECYCLE<br/>CRYPTO INCUBATION FUND</div>
-        <div style="font-size:9px;font-weight:700;color:#6666bb;letter-spacing:.12em;text-transform:uppercase;margin-top:10px;">ACTING AS STRATEGIC CO-FOUNDER FOR HIGH-POTENTIAL CRYPTO TEAMS</div>
-      </div>
-    </div>
+    .ticker-label {
+      color: #00003c;
+      font-size: 9px;
+      font-weight: 900;
+    }
 
-    <!-- Body copy — three paragraphs typed -->
-    <div style="background:#faf9f9;padding:20px 24px 16px;border-top:2px solid #5555aa;">
-      <div id="typing-container" style="min-height:110px;">
-        <p id="para1" style="font-size:12px;line-height:1.75;color:#1a1c1c;"></p>
-        <p id="para2" style="font-size:12px;line-height:1.75;color:#1a1c1c;margin-top:14px;display:none;"></p>
-        <p id="para3" style="font-size:12px;line-height:1.75;color:#1a1c1c;margin-top:14px;display:none;"></p>
-        <span class="cursor" id="terminal-cursor"></span>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:18px;">
-        <button class="bevel-btn" style="padding:5px 16px;font-size:10px;font-weight:900;text-transform:uppercase;color:#00003c;letter-spacing:.04em;" onclick="openWin('contact-win')">CONTACT US</button>
-        <button class="bevel-btn" style="padding:5px 16px;font-size:10px;font-weight:900;text-transform:uppercase;color:#00003c;letter-spacing:.04em;" onclick="openWin('portfolio-win')">VIEW PORTFOLIO</button>
-      </div>
-    </div>
+    .ticker-val {
+      font-size: 10px;
+      font-weight: 700;
+    }
 
-    <!-- Stats row — updated values -->
-    <div style="display:flex;background:#eeeeee;border-top:2px solid #808080;">
-      <div style="flex:1;padding:10px 12px;border-right:2px solid #808080;">
-        <div style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">AUM</div>
-        <div style="font-size:16px;font-weight:900;color:#00003c;">$120M+</div>
-      </div>
-      <div style="flex:1;padding:10px 12px;border-right:2px solid #808080;">
-        <div style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">MEDIA / KOLs</div>
-        <div style="font-size:16px;font-weight:900;color:#00003c;">500+</div>
-      </div>
-      <div style="flex:1;padding:10px 12px;border-right:2px solid #808080;">
-        <div style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">COMMUNITY</div>
-        <div style="font-size:16px;font-weight:900;color:#00003c;">500+</div>
-      </div>
-      <div style="flex:1;padding:10px 12px;">
-        <div style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">CEX PARTNERS</div>
-        <div style="font-size:16px;font-weight:900;color:#00003c;">20+</div>
-      </div>
-    </div>
-  </div>
-  <div class="win-statusbar">
-    <span>NOX.Ventures // Full-Lifecycle Crypto Incubation</span>
-    <span>EST. 2025</span>
-  </div>
-</div>
+    .ticker-up {
+      color: #006400;
+    }
 
-<!-- ═══ WINDOW: PORTFOLIO ═══ -->
-<div class="win bevel-out hidden" id="portfolio-win" style="right:20px;top:28px;width:520px;z-index:210;">
-  <div class="title-bar" id="portfolio-win-tb">
-    <div class="title-bar-text">
-      <svg width="13" height="13" style="display:inline-block;vertical-align:middle;font-variation-settings:'FILL' 1;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z"/></svg>
-      Portfolio — NOX.Ventures
-    </div>
-    <div class="win-controls">
-      <button class="bevel-btn win-btn" onclick="minimizeWin('portfolio-win')">_</button>
-      <button class="bevel-btn win-btn" onclick="maximizeWin('portfolio-win')">□</button>
-      <button class="bevel-btn win-btn" onclick="closeWin('portfolio-win')">✕</button>
-    </div>
-  </div>
-  <div class="win-menubar"><span>File</span><span>View</span><span>Sort by Name</span></div>
-  <div class="win-body bevel-in" style="background:#fff;padding:8px 4px;">
-    <div style="display:flex;flex-wrap:wrap;">
-      <a class="port-icon-wrap" href="https://sign.global/" target="_blank" rel="noopener">
-        <div class="port-icon-bg"><img class="port-icon-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAMKADAAQAAAABAAAAMAAAAADbN2wMAAAFGUlEQVRoBe2WfWhVZRzHn7vpbGWmls4XZlZGrZSMCppQszfqn8QixYgoiF5Gb3IDMbQCK7LIG9KLWFGUgvWHSiFhb2ZEaWUUVjPmtnKhc9tlu2+7Lzv3nNPnezpHx2XF3R0LgvODz37PyznP+f5+z+957owJLcxAmIEwA2EGwgyEGQgzEGYgzEA5GTh0p4mU89xInqlowd5oXTUfES4Up8W65f/RED6RyQXgwDz4rWGL+QE/ahunFdxYo3xpMBJlR6L7hhO3grm74Sisgh4Y1hB/GhOr4QDsgvPgTcZvI4h22qOycYifwgpPw7mgDMkUjMTpw31QahJxPRyBU0onS/rL6V8K6xFcRHgn7Zmg740+ABaZAE0wH4ZaG50a96VFFxUL+WXJeJflOvbWabEeCSjLEFvLg7fDQcRn/JeUsC9gDfN1jG/1xytyXgkNeTNOW7WpstEOZOEqeMpvf4kvOwCenQ0NsB0C202jBTZBsOPB3Ih9aQA/ssJSKPgrVeHr/DZlFannAJ/h9+UUaC1jC/GToI0DfQwf2Cwap0NXMEDGLTLfQf9WyAfjlfrSAOawUDPYoPpuN64b5UQg3iuHzfiXIQjwVNrPQxOoFFsJZiVB7KUtm/y3M/3yCNc6upGqIUkwLmNKkr6rw94NKjWdqzTzNvNKgEiAkjkVfmHO06CXh9oFdGKwER4CLVQDgdXSkNDAptO4GlR6SsYlEI0/NiN4Rh8uQgpk82AH3OuL13qPwH3gwBLYAi/ABMQrqNf8sUb8hfAOXAOeVWUKtslajhm0XeO47iCjyoIEJaHVRCIbKRSVirb7QVCAyqRMZ0Rjix3H+apYtMxgoVCfy2W1MzIFqGeUPZmSIhEf+5l/nPZS2ERAh/BKoEprP329dxPcAq1wEKRjBowH7ehZVRKvIJK5ounP2d8Tx7XIa4RH+Q1Q5o7oYYz43BbKo8uyPKEGofFsdmAfY0eTib7WZKLfpFKJSCadCgI8n/d0GfTysUX4FbAZcRJzAyjzr9L/k/mJtK+E/bCTvsrvYfgDXgGJXwMK9GvmdRbPPlFCmrWRGM9YzvGU5XSnLG8umbdNOm+ZTCZt0iltCvWQ9ISagUzazQ5ktPXGtvW2VvFMta3yWQifg3ZW2T8ObzGnHWqGLtgDMt128+F1AtKZWQ6XQYz+r/gHQPPrIQ3nwOHSQ3xFJGL2kD5lsKN73eVLCkXXLQ7aJp/LGcfW2SYVJ4V6/WH+KKjFoPXfhgVwHayDXmgCBfct9BHQFPxKaIEP6Ev4KtgN2+jX4++C90AJaYBjBJY6sQMMyHT4ZoLqbDpUe7Xg/TlZ+Iz/m+lpHeabYS0facfPAu3Cz6C5DtAP5VxQcMtAot8AlYZKSzu4gfdz/pi0fQoqywTjPXgvQ9qODSDBXjngJULbqCvtJ4iCbpPfQfYJDEAC9JxMY7o1+uBM0L8OEir7Bp6D8dDGeIKsPkH7RpgDOqh69jAo0J2wAw6ATONPggO9vK9S9MzPbdAdG4/Yi1lZ2/4dH+8c+hXm7qD/ItwPu5iXyLKttITKfrHcBxGog/cuTAJv24N3mVM5rIb34aORitc6Yx4A39DVOBU+Q2Ae7xniJ9N4BnRGnmVOJTpi+y8C6ESVSnV2oA7xuijWgs5LM+J1M1VkY34GEKvb4x7QzfYh6GrVedBB3It43TIV25gHIGUEoe/oWqwBlcoAwi18aGEGwgyEGQgzEGYgzECYgTADYQb+xxn4C0a2yDbF3ZI1AAAAAElFTkSuQmCC" alt="Sign"/></div>
-        <div class="port-name">Sign</div>
-      </a>
+    .ticker-dn {
+      color: #8b0000;
+    }
 
-      <a class="port-icon-wrap" href="https://talus.network/" target="_blank" rel="noopener">
-        <div class="port-icon-bg"><img class="port-icon-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAMKADAAQAAAABAAAAMAAAAADbN2wMAAACCklEQVRoBe1Xu04CQRQ97hqqJfyBUEtCpfIJFFhqKR2xImrhLv6BoIX+h1ZY6B/4goLQiJGXEGKwgIQWcIeEQpjdmXFnYzaZScjCPffeveecWbKz9j34miHASwvw7PPRFYH/dlA5oBzwqIDaQh4F9FyuHPAsoccGgXdgnUeA+/sHnJoWJpOJY3p0YwPFYgHx+CY0ja7LdDpFrVaDZZ2h3ek49tJ1HZcXBaRSKcecBcBFoNvrod/vL2qo18FgYJM0USycI5FIUHPI8KaVR7lcwWzm/g752e1ReywH6VItZ3H8JgORwbLZQ7zV31cq6naMYDzDrxS7BKQRIPcgJD4aDWQOMqhWqyBbhnzI9wM7RjCW8i6zUiGuLUStdAk2mk2YZh7HJ0c2K+Dq6hok5sfiIkAeKpE1306VCnI5m4C9hsOhsPK891zjOZGNRiM8Pj7Nt4MbEbJdSqU73NzeUtP29/ewm047/kstinRdQzKZRCQSWYQcr1wEHKspQKvVxtb2DgUBXl+eEYtFqdhfg1IfYjJEKBRynMUNcyxiANIJMO4nHVYEpEsq2FA5ICiY9HTlgHRJBRsqBwQFk56uHJAuqWBD5YCgYNLTA+8A14lMRLZw2LDf+WMYj8e/ygzDAMFkL+kHGtkDsvoFfgspAiyL/caVA34rzOqvHGAp5DeuHPBbYVZ/5QBLIb/xHzgxmX9XDV67AAAAAElFTkSuQmCC" alt="Talus"/></div>
-        <div class="port-name">Talus</div>
-      </a>
+    /* ── Start Menu ── */
+    #start-menu {
+      position: fixed;
+      bottom: 32px;
+      left: 0;
+      width: 230px;
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #808080;
+      border-bottom: 2px solid #808080;
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+    }
 
-      <a class="port-icon-wrap" href="https://www.cetus.zone/" target="_blank" rel="noopener">
-        <div class="port-icon-bg"><img class="port-icon-img" src="data:image/png;base64,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" alt="Cetus"/></div>
-        <div class="port-name">Cetus</div>
-      </a>
+    #start-menu.open {
+      display: flex;
+    }
 
-      <a class="port-icon-wrap" href="https://surgeai.io/en" target="_blank" rel="noopener">
-        <div class="port-icon-bg"><img class="port-icon-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADsAAAA8CAYAAADYIMILAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAeGVYSWZNTQAqAAAACAAEARoABQAAAAEAAAA+ARsABQAAAAEAAABGASgAAwAAAAEAAgAAh2kABAAAAAEAAABOAAAAAAAAAEgAAAABAAAASAAAAAEAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAO6ADAAQAAAABAAAAPAAAAACYwqEgAAAACXBIWXMAAAsTAAALEwEAmpwYAAAcLUlEQVRoBe17eXxW1Zn/2e72rtkTQiALgZCYsIVFQDECFRRwG6nLz2VGq9PpMo61Ux3tZ8R+Rh27TOtWf7ba0rqMGhVFMYpVUxERBWUNRLawBBKyvvtdzjLPDY0TKrJY/Ov3u/m8n/u+9557znnOeZbv831uMPpajxq9uDiv0MoyRzNGahXWx3gOL7I9J0gI5jqjvRrBBxGVGxmmrZm4e3DPnrc7v64p4dPdcaRkek5WbvYMovS53ONTGGaVGjMLQDikFHyQ/1EwrEQEUaSkhOto4BrB3gEu3FbPFauYpt5s27b3E4Ra3NM1x9MmbGndnOnCw1cips2XlIw2qYkc204YGmsnWN+SSnnbmYbbLY11soCRQZx7SgbDTsIrtl073wrpY7Gy69LcLrcsM0CwUnYm9amh4xdDAeOZDR++3Pa3Cv03C1s74aIZaY/fihRexExd48o+zBV6Q7jkVdd2Niot3dHdujpxMhPNz28IhXLM4dQic6nGFjoenqUzMyC40w068JzJnIc2rXuj9WT6OlabryxsTs7wEj1afks4mP0djTCTc2ctM8RS20m+vrtl9b5jDXaq10ZPWlBNGLuOZ7xrNS0wDCunT9PEg/lh46G3317Wc6r9fSVhJ0yfvzhhi58KZZTpQm4MEXWf0dO/fM2BNZlTncDJtB83raEEI+sfbAf9kOqRCCPoE+65N7esX/b+yTw/2OaUhF20aFFg10H3Jx5ntzCD2EjY/8nczMObN7/fN9jhwHkJIqOePC/PirCRWDeGe1wfZdt21HVdk1lWJmziPUplNlqyc+v69eu9o549zo8JU74xIZHGSxSxLqKMZDRCbt+67oWHMcbyOI99fuukha2ZPi+HcPxbm7NLKcYbsWHfvH3NW38e7Kn+7EuHOcqrt+NoDiXkLMfmxUwzijVDRxlbCs6lA/5XMl0LUSIRlnFwynIdcp1H61tz/9iIGsVgX8c7NzQ0sO50zj95XN5DND0c1NgjtZX6D5cuXWof7zn/3kkJO6a+IQ8L44+Y6uczKld0Ht7zra62lg4EA9fyrLM87t3guHwuRVaR9MghncjNXPDNYG9bNF3tsjNev5NCDjaZ1A2UZdteiaGb5zIqFiKpKohyVpaU5P3T2yue2X2iCQ/en3DmZQ2OVL/l0qpEvOeZvszub3e3th7XEZ5Q2Pq5c6Oxw+S/mRY633ESz1sy65qt3zyDz3p784WdsfQPkUZnwhZ1gQ0tN0z8sp1017W1NHcMTup457FTL8llhF/FuXsXnD+LasF5q1cvP+6Eh/Y3buaFVa7HnlISTxZevBGl9lyzc+dOZ2ibod+PK2xNTY2eIUVPaEbW1Vxklu3e0LR4ROWMstycgvuEqxYnM+nPQuHIgxlXvbJz00sHhnZ8Kt/r6qePTTtohRD8jrZtHz93Ks/WzjpvBLKtZZ6j10vhPLBj8yu3IIx91PKF47jCjqidcwfTrHsA3jTHDHFRxJN/R4S6HwlOLar9NBVzHmtra+7/Qq9f4cL4KfNfkhJnAuHIQxk74YOttODprpaPT6wlE2dcUMqdrBXplDpD0sSNe7a+9vixpvClwo4ef95CpJmNtiMPxDOxywuyo9dx1/6+8tyXM6n+Wzv3btpzrA6/yrWpUy+Y3J+y3zKt7Cx/Qq5rw/pKQFhat1CpTZyoZyPDoq9vWrns8Jf1X1k9bxLRwm9wldZDupi9af2bADWPPujRP4/8GjXuvALO2R9cTgswsX4VDmgXe579D64bv6Ng2we37oh1njCg51ROixQXlNcOK6hQXV1tyWONM3gtO7s0mkjEuy0z+CTB4gkhUk+n7eT7AMi6mKFPVcS4Xjre+SNKyzd2HNi1f/C5oefe7l2Hho2sPESofrkrvLERUzzX39/Ph7Y5xs4qXFqz4H5MQv9aVVOzb//+3T2J2KEqKTJ/3976fuPQh4/1ferUa3N77I7rCdGvdj1vrOf0P35w59rvHqvtyVw7a8GC7J5udpXL+YMW4+3ZOpq2atWbh471rALlnzT90mfSbvgKJLpub93YdP/QdmToD/97Re2CetMM3GQGc1E8nhiRSfVWGYxeeSJBb7rpMW38jMXXxFW8mVPjp1LPHqeHcvW8/JLPho5RXFwfKB09q9o/D73+Zd/fX7Gib9vaVx5xJX4t5WojOhPpaV/WFsCFys6xbsc80YmkdnPVxAuLh7ZlQ38gtIQo+vHNDopEuauQ290uMfa+t3Pjm8uPbjf4q4EV14f1vEhW3fub3v6Bq/A3HaUjxBiCxxEgHMTMrOJJc64d54p4jrTxXNejC7gny3VmLEXtCDznQL432OHnZ4gENZRql0otkkxwo1cQfbQrMt0aVsf1Fe+8/szeuvp5v87wrLs9J/kd6PDHg50epcbFlZMn6qHiP2OaF1ZIIIIT9+9e99K/QePPXXlDw6K8joRcwAX7BmSi5VwoixBjDNXNoFCQmyBYP4wRxF2kaxIyVg+ct52mlAQQ1hGHxfBdrUndjlBp6dj1jffHBicz9FxTVlYkzdCtxIz+c4aGdRoIrPFS3Tfs/eS9bUPbHet7zZQLilK2/rFlEK0gR0x5b+UrA3Z+lIPKLqr9ATYi51JQbs+JvbDX1b6PulqOwLglS0hZzLwi4aClCodv5MoaJ5E1gmnhYYQFdM4JbJIGy0JgkShiFISGJ4WQkOKamgAhBdIBMIGw0NKTGSvV27sr3rHt0/rZl08KRYtuK62o3taxf8eA8F39/cnu7sNvZReNeBNRWmvbmZGciBeSh/Yd016HCt11cEcyf0RVWAixMJlO7ujt2LPOv/+5zY4Zc2UeIeYiRBjiTvxAXiB9B2ppHGAJaqddWDhqxcdPwK48LfX86rSykKAWUsxAHLqwPcDyfk+AeWGZkOQAU30GQmLQ6CDiwhgQUkhYW9h1RjUEY/k0xS/H1F+2Kh4T70qUdXPa1u7xnYw/scr6MyfVnz1v2GcbPvg4YmkXEUwyBjZ+Xn/TTbCiJz5CRDbpTHHCjCtqahaDbQ0RNum1z6CUjiHcRcr1/mPD2rd2+A2qJn5jcsbjKxAO/z0iEcwlPIcZbCCoOfOV3UGEcoThYwYwEhKiDIVrkIgoJX2ZB9QWJosYXKMqg6TTr4jH/RQoorB2lgTD1LUIEDWBK4rHLpg3btaickZy3+rrk8vHTmgo+3RVU5fi9HEmAzPphq6IP68THW6ZuZFS3EIknYnCyUq//ec7G4qEGhjVCeLptflB+qR/s2b6FXMcrr+icFa9EAHkmx0BNQUnAbYoEHfTiBHfnAXKz8vbHgoF0gj7Ws9BfR0UClvI12Y/AwM0hBgshIUyzxdmWefkWGw6svtvTvcefAuLzN069R4G7okGrPBS17Ze86SZYxrhycLV/zR1+mULh+UVVmGFRTwe96d2wqOlsdEFE2rCyqTcwef6D8BUECopmW55Lp+pGwLZdvLJ9Zua01PnXDK9ty/9FGbRIk9Y0EoD04GJK9h5EISAYYNlIunLpmR3KpZ5PpbsvU0zAiAYxHLifhKMRjucrsMXACZCpuYBiWj/tDCcvLO5+cXBYO+jnAfhg5YsQeQPL1xgYRK+wZWsUCFnD9Gs60lGXJLKJF7itq0ZTDZW1+X0b9/uP3HiQyD8HhL4Nl1nZ0HrRwbsY/TkBRXCxh+DxtE0zkwakRuIx+LyHU+F6xQGJ6oYJDcUBSxdJZP9mBLwsUA0aaDGXHgoEA48bGekBvjuHxmoNwDyPodnrgKHda+mGROJBJt2Y6+V5hcvbm7+8rzz/PPPN3Z0yH9xPD4zYJL7W9e9tdoX6YwJ5870lCopK8x+d+VxIONfi18yZvZwysKbLZO1F0XI9IGdpVwbKQ2co1P8fttHr+3NnnTxbzjNqpPEOOJkpI2AJVxrgcEnMJppY7gOTxIVAzXOpDVkvt3vevdqhgnXbBQJ4Ac7+12LUDYRDBb2HyIrEv91PEH9iTY1Nfnp2VGox7++dcO7A0IfhU78Gyc4po/P7fhkJzkEpEGZlOnsAZt1XQ7xEiPdCG0uqjh3nuep6/zIKgUoArgNHUCC49p/6Ozo6KRghAJ0VykOIQVUWcM7uHQPYMzHKun6qh6zAnnPUqwuY8wEe/Vjr2oRKbHmBHM77bcbG332Q98HPEkIsHfOgLCeVHWQyqHuHqdFKfNHGgnQovxcHjB9Ly+AVkklATO067pWA4k2CASxlEpQYRsWgqzo6OqtxERhAPGg2nSjEUh2GCxrsh93B3I123sDUsET0ianXVroEEyiB3A60CT6sCPCKlnsY52copHfy8otnQkwQBoUP6lhKRXYpElEa65JdgLJVeCDKbiIYOfAlUuAhPKDSNgoZwzCDuw2QLr1+VmwTJo+DPJTWBiKigqKd30dgpxMn54Df4Ii1zNyB4SFeMQ4IJ1kMlUFu8yElDva2na/mknFMYWwAez8/pCuOwQpU/kkAHx8FVegzuFgJBUOWrl+QDU0zbfOz1DKcGE9wOP6wBcWRCdfC8V6MsLCYpsEHCpELWBg4YB470dN2BVgRwlHWsDY5thJCnYJs+Wwk2ifBwvkChfWwgcLILAvM6ZCI0ZSSuD6YLF8qCg85SWTPOV5vItADMag2oAgBsY5mcmd3jYNzArq43xT8mDmA5NwXS+JKUyMgR0CIvKkuxzozoC/q1Blg70R++JxGwRw43589WUFBQU0xIRiWEBN5wCGJEBy8Acclzc1PeQQwncBXzoAKNLp/ujpFeLkequcnHWWEnw0hQ0MBWXsyIorvg+CL8wNPDIIHQzo21OpFKgqYFhwMholyY+S6xJAj8YoAacD0VlSsFFAyLYtdcH7PgXKFGwWePuANcWfiknFBh9dwYqiRF9q4slN73S2WgyS2LcRig2lHCWIbB8QFoTbwSAboZwhArlZOBRKMD2gY5ILHjcIewhRtaXFNQy9y4+aAp6ysefjY+om+/KMQg5pl+yCK5AUZMbX1FxQBGvyApK2C4wH2HzwG3VnLcg+naKcqK/KyalveyJwngd+BRM3ZSCzZ0BYywp9Biy+c6SKoBzhIiegcQcpP8ZDEg8pid+5btLDvneGwjGIDB84p1KxMS1vrumFjtYQQE/UsApVwFywcc2Ln4Ilf+g7M8SCw+1etPhEEzxd98dOXDhdIeM+yHjA6kADhTwA0bRvQFimzHYl013gb2AnpRdLuF5WVDvIiAv2KpHnusP9ibhCbgYuCgFKBOgLnQBk1E19pn8v49qNCDIaF/JaR+IbJ0+eDHlF+Jec24ozHSvDvPPMhivK/LZf59Ew7+pKrgJPuEILFObn74FSDcw/3bKh+eX+AWFzrPYORgB4g3AecMJJ7LGgtNuRsgH1+4hZVvgTtExjNZRuEAY71LAG6mEgh3tToP6SlZNNXqOIb/cRFiT1U2JO9iU71/7+FcbkWgmOiuvhkT0p7xdLgAT4uoSdMfuq0u5+/t9AJlR7affu7s7Dr0JNG2VnBXb7Yw4M3NzczIHdXyVlBpmmGYZULC8jjA4uvYN+xqqkPqamZnqOhsNbhefuBc81EEG5JMjFVskh15rrrxxwTo/6WREkugQ4oyWl4xZmISd2J5VJ8NPgrBS79Inn1vs0z2k/qic31Pb02svTGTkZ4+TP3a5DD6QzqUVQmwJL5Kv8AT9fZdjt1yEHhYwcWDLOqzZsaO5nyNwOqAmahcs8Mzzj01W/72IU/5n54Qfip9RM5JEAQR67FhphLaX/jsj0egBgSOlZ1RDQ/3PvpqZ3Asx7AJQbGgBWptpPxk+75tbTucO1k2ZfolSkCTRqnJL2z1o/euFHrCjy70YgUI6l6DDMwEdHCatrwa06JdshCYDwY53t34Qa4zofQDAWAd8VnO9fgwD9/EDkBWEdcFKuCgDoMOdOm3nptJaWxmR+JHK7FF4mhcKg9pEbxk1YcN32D1/+kWd3vezTN9gKkqST/vnTL37waOXEs/P9Pr/qUT1xRunYCRc87MjoixlbFPb07v+XPVt2/rh0wvyfBMPZt2BASzDxpo+bGzv9MSAdP3L0d2y3Q/nlRZQFz8GeY0TGFvyOqqx+iL/XwBYy7vUV5kULn66YVLAj0eMt8jAtBN8L0mOgngQARRH89o2XL3tq6QO78ssnASdsng2Rh+hENAwrrX4/lml7VGdWvRKqUiMmkixQLyS5OLdolD16ZN3e9vbtJw0ph42eVB3OHXkzYdFfIxKdLQTZkUj0XskiOR9n5Uef0DXtRqgiAHhzBXGTt3Qf3rXXl/JzYf0foYIRh4hiV8PX4bQ/88HuKnN1tNO7iGqkGFYoSyp+eP07L/85r6AcIASbf+R1H0BNfhIg3eq2vd0bOva3tM45c8z7He29ExgNVQkSMQGGzjO1QHPbJ6//MjdveKlGtPFJYoHAgKkxWyQIvqhwRHVVUekkFM2vgdcnhpMULSJ5gZFGQVldTvGYyaVFFeMnR3Kr/08kb9SdVIvexYKF59lCKseJQyHM/gnRtEkG0/4YzS6YJDAsJkxLuZkPR5eoe6GMCb981PdXx8hx839rssC3iGO/un3r6xcOr5n/A6oHf8GA8wXHtVcXh6fJcJZnZ4w1kgXHKL9jf3eBetFxvLViROTcN1966pBfiY/FvGcJjc6C1wIAczgHE/Hk1R27Xnp3ZN2cfyQschdh+jBg8SHc+XMBADqQN/MY+LJubqdsiP1gQixImZZLmRHmkL1IgKWhUAhlnMSf4n3tfwQmtCgYjN5AMKuyHf5qychRNGm7F7iZHuE66Ss7Wt74vGRz1M76cpeMrt8H8ecqJQM1eUUjVwtMmzzlXgn8cBQMLguAVWbrmhWv5w4r7QADvoxgAyvBgB41AD/gvEQyXVq6YNbL65c9FSuprv0T8FVTlEdKkcoJQ6y6JGdEVc/eja/+pqCw8lnH8QyNokpA0JaCnNOWwFpqAVNpZo6m0wJmGAVI07IAhhqugCQKNCgvPwflF+R5id44cAbpiyMR42KY9p7emP2vjIW327Z7JeSfUNGIvfvAXU13NjbeDajgyPEFYbv2be3Mz68tBKJthsDJsVZV22+c3pwIodY5EvhfoBgnZBeNXLljfdM7S5+aOBzKJPXK52j8RAC8vFCqRh6Mye5D25s727bFK6qrl7spewQmWh3TI4YkfFF+ScUU4sbW79668vFoUfVzwFH1U6JCwFjmATanBFCa4kCmS4jl0DcFrQLVh84xsqFq3d/VCYxsHANR8raTSd2ejNOnA2bkIsMM3q1bVo4ScS9ket999FdX7xwU1D9/QY39i/llDUXhQOg9GqCjpZf891128FeloeAmKFqU+WmbcPvexrHYQlY4XDeoXAal/tlS+KUNPx2CpF65IitAvvfp6if/r99fff1Nmo3iPxCC3iaIlQ0cps9fpYnynmfUfmLr+ubVMBE1Zd7fnZHu9+oAhMwiTCu3HRWUHoa6GlGQE9sCeX1Oim80DPJhpj/1WVK5pqWFrvA4+lYolA8mAXuHHSD5+363d0vTjTA0LP//HscU1r9dfsY5iygJvYDhTa50Ij7bM81hGmMvAJlN/FSOyvR/7d647NaZF15f3NPV94LjEsCjJuBQA3YCKDjsuLrFv7tp9VOPDw43Y8biCXFb3u5JKFgBYamUBzsmgKKS6+EFzvfCZuB1k0X3dq05uH8nGiDfBh8dOJfU3JBjWf2jXTszGaDtQuAZzqKaEbKsMHJt/w0cfyN6WhKpzJyuti9W7L9UWL/3ijEL72Nawe0CxVv6+rbP17ILf2xaRTcRGQS4GBe6oW7Z8sFzD9XOumIEMBJLMxk1W/DogBMhGpRsICe0SODeojC+b5BZhM3H08658tykK7/jcjkXlj6KfRwDMgOVA6agkvB2zf4QpnHDNGywc2FzD5IxCV5dDdMNrRTSKFBpH8m6nfFM4rFRZRVj4v2ZK5AXixPPuWzbltffOmqV/vLjCzY7tFE0XLw6HAnXQV3mbCNoTAqZ6q5kRlVRGqkATwIR25lbVFHesXXVS++OnzrzlXTSywckMolBvchmKZhnGGiqwDkOR/WVpaM2HTjQcvjuuxFq37tlT9eBrc8XjZq2HJLrHeDKicAkAEWUsEc1HZBWvoFICbAfQIGqctDNMjC4Ek3XsgB0ctsFYtBRj1g0+s+OTEfSifS3DSY0jFK3bN/Y9Ln3HSqL//24O+s3mDZtTmGaB561PatBKLspafNfMjP3MRCknNEMzLOX64Tc0bpu2c/89uOmXv4t7nr3xDWtAGo3MEAQQAeEFdHfI+zux8DzPLK/9a2Dftuhx0QA8bBT5cmMdwbgyvEWM/M9Jw0VNBczSlO2rQ4CItoRiYZWrV8V2Fwyfm2B4MX3hs2ca6EOA+XR9J1b1q24d2iff/39hML6D9TXnz0sxSO/FzgwD4J367gzz0we6mifuKt1F9GBMAcEpaST/HV5MftxMyQEFRNmjabYup1z/WqqZenAMAPQApAJ6SHAgL1Uea9ka14jQ12fwOt86b+e1Jf9XrwY0Y9azxwP1nkNxqFvmnpesZOOeQyrO3Ztafr5lz03eP2khPUbV1TMjUoDPcb04OVmKBtNnDZV9fbE8JYN2/z4CtSNDx5j642QfufGVS++6T9TOaGhARzaLQDa5nNs6BJiMYJ4qjyBTC/NwaFsgVdtN6W4WA1udRsAiISjeFLaaQ+yJx1CSdiSgayeRGKsaZkzgIivhWWtgQwKwjBFjhPr7+nv/X5839qn/PFOdJy0sAMdwUtgpSr/NsZybxckO1BeXoaiUQsdOLAbQeEYbBSQFIbcAPNGM0h+0fLei5/6z1XNvADeQKNXOR6aDyR8FdOC8JanDhmQXxwDOg8KZVA/BMLOhcobkH+g6xrHFtwNU2YhwwhC9cFCiUT6iPODJISSw5up5X5v2wfL3/PHOJnj1IT9S48VoxfMlZpxDxSXp0YiOYBqCqEMwlBPXw+KJ+OgslCiZpkECLISSu6PlzihVSs3PZlClZVGaWDsGUBwNBBTOwugQxFAw+HgJXOxgEIKkNJQwPYAyKcAl+1OZZwdphE4UFZedn13T2dRLAZ9S2wr4f6OapklOz9t6joZIQfbfCVh/Yfr6hZke7p+g2uz71OaNZIZIZRXlAWso43aDuwEsMMgVaRA39jIIhje+3dXgbNZrke0bWfEjH2Nf6nqj506NTc3pygvk9IMKgziSEJSSRvIeC8AHcyGzPlisPZqIFcEoKmVtiN+tnfrincHBTiV81cWdnCQ2ikXjQBYd13GE9cqpo1W8FqBT6n6PBsBJoPCh4FPlgAguF91Z24Cov/+kGYcgvLIYQivKWjpQLQCEprDexBOYTqVKdO00CgNtIXIjAe8R7Om64/k6n0rfFZlcOxTPf/Nwg4OWDnx/HygaM+V1LpESmM6xQJCCYRZoGcpcFU+LSPhnQuPwDsX8KfB+xX+f34QAPcYrgMUhL0D29V9Is9JmxrZDhzYyqilGhfNenPDkiVHQ7/BcU/lfNqEHTroxJkXFutGuLYrkalnRK8D+nU4CJ4HiUsOxsyC95CJJ/2KiZcG2JvQKIYKtzgAKdm2QABvwdTblKZid1vz6a38fS3CDhV88HtF/eKoRs2cIEGmgFpTGmIIbGAaSkiJyoKu+N+inoNj/P/z/6sr8D+vTWYfAgwIdwAAAABJRU5ErkJggg==" alt="Surge"/></div>
-        <div class="port-name">Surge</div>
-      </a>
+    .sm-strip {
+      background: linear-gradient(180deg, #00003c 0%, #000080 100%);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-      <a class="port-icon-wrap" href="https://www.metis.io/" target="_blank" rel="noopener">
-        <div class="port-icon-bg" style="background:#00003c;"><img class="port-icon-img" src="data:image/png;base64,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" style="width:32px;height:32px;object-fit:contain;" alt="Metis"/></div>
-        <div class="port-name">Metis</div>
-      </a>
+    .sm-body {
+      margin-left: 26px;
+    }
 
-      <a class="port-icon-wrap" href="https://gaiai.io/" target="_blank" rel="noopener">
-        <div class="port-icon-bg"><img class="port-icon-img" src="data:image/png;base64,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" style="width:48px;height:48px;object-fit:contain;" alt="Gai AI"/></div>
-        <div class="port-name">Gai AI</div>
-      </a>
+    .sm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #000;
+    }
 
-      <a class="port-icon-wrap" href="https://nfkings.com/" target="_blank" rel="noopener">
-        <div class="port-icon-bg"><img class="port-icon-img" src="data:image/webp;base64,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" style="width:38px;height:38px;object-fit:contain;" alt="NFKings"/></div>
-        <div class="port-name">NFKings</div>
-      </a>
+    .sm-item:hover {
+      background: #000080;
+      color: #fff;
+    }
 
-    </div>
-  </div>
-  <div class="win-statusbar"><span>7 objects</span><span>Disk free: 4.2 GB</span></div>
-</div>
+    .sm-icon {
+      font-size: 18px;
+      color: #00003c;
+      flex-shrink: 0;
+    }
 
-<!-- ═══ WINDOW: SERVICES ═══ -->
-<div class="win bevel-out hidden" id="services-win" style="right:30px;top:60px;width:360px;z-index:220;">
-  <div class="title-bar" id="services-win-tb">
-    <div class="title-bar-text">
-      <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="m741-600-44-96-96-44 96-44 44-96 44 96 96 44-96 44-44 96Zm80 280-32-68-68-32 68-32 32-68 32 68 68 32-68 32-32 68ZM301-80l-12-94q-7-3-15-8t-13-10l-88 38-99-174 75-56v-32l-75-56 99-174 88 38q5-5 13-10t15-8l12-94h200l12 94q7 3 15 8t13 10l88-38 99 174-75 56v32l75 56-99 174-88-38q-5 5-13 10t-15 8l-12 94H301Zm185-235q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35ZM371-160h60l8-72q29-8 49.5-20.5T529-286l66 30 28-50-58-44q8-23 8-50t-8-50l58-44-28-50-66 30q-20-21-40.5-33.5T439-568l-8-72h-60l-8 72q-29 8-49.5 20.5T273-514l-66-30-28 50 58 44q-8 23-8.5 50t8.5 50l-58 44 28 50 66-30q20 21 40.5 33.5T363-232l8 72Zm30-240Z"/></svg>
-      Services — NOX.Ventures
-    </div>
-    <div class="win-controls">
-      <button class="bevel-btn win-btn" onclick="minimizeWin('services-win')">_</button>
-      <button class="bevel-btn win-btn" onclick="maximizeWin('services-win')">□</button>
-      <button class="bevel-btn win-btn" onclick="closeWin('services-win')">✕</button>
-    </div>
-  </div>
-  <div class="win-menubar"><span>File</span><span>View</span><span>Help</span></div>
-  <div class="win-body" style="padding:0;">
-    <div style="background:#00003c;padding:12px 16px;position:relative;overflow:hidden;">
-      <div style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;"></div>
-      <div style="position:relative;z-index:1;">
-        <div style="font-size:9px;color:#6666bb;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;">NOX.VENTURES // CAPABILITIES</div>
-        <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:-.01em;">WHAT WE DO</div>
-      </div>
-    </div>
+    .sm-item:hover .sm-icon {
+      color: #fff;
+    }
 
-    <div class="svc-row">
-      <svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="m136-240-56-56 296-298 160 160 208-206H640v-80h240v240h-80v-104L536-320 376-480 136-240Z"/></svg>
-      <div><div class="svc-title">Venture Capital</div></div>
-    </div>
+    .sm-divider {
+      height: 2px;
+      background: #808080;
+      border-bottom: 1px solid #fff;
+      margin: 2px 0;
+    }
 
-    <div class="svc-row">
-      <svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M423.5-103.5Q400-127 400-160h160q0 33-23.5 56.5T480-80q-33 0-56.5-23.5ZM320-200v-80h320v80H320Zm10-120q-69-41-109.5-110T180-580q0-125 87.5-212.5T480-880q125 0 212.5 87.5T780-580q0 81-40.5 150T630-320H330Zm24-80h252q45-32 69.5-79T700-580q0-92-64-156t-156-64q-92 0-156 64t-64 156q0 54 24.5 101t69.5 79Zm126 0Z"/></svg>
-      <div><div class="svc-title">Advisory &amp; Incubation</div></div>
-    </div>
+    /* ── Typing cursor ── */
+    .cursor {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background: #00003c;
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
 
-    <div class="svc-row">
-      <svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M720-440v-80h160v80H720Zm48 280-128-96 48-64 128 96-48 64Zm-80-480-48-64 128-96 48 64-128 96ZM200-200v-160h-40q-33 0-56.5-23.5T80-440v-80q0-33 23.5-56.5T160-600h160l200-120v480L320-360h-40v160h-80Zm240-182v-196l-98 58H160v80h182l98 58Zm120 36v-268q27 24 43.5 58.5T620-480q0 41-16.5 75.5T560-346ZM300-480Z"/></svg>
-      <div><div class="svc-title">Marketing &amp; Community</div></div>
-    </div>
+    @keyframes blink {
 
-    <div class="svc-row">
-      <svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-160v-80h-80v-480h80v-80h80v80h80v480h-80v80h-80Zm0-160h80v-320h-80v320Zm320 160v-200h-80v-280h80v-160h80v160h80v280h-80v200h-80Zm0-280h80v-120h-80v120Zm-280-40Zm320-20Z"/></svg>
-      <div><div class="svc-title">Capital Markets &amp; Trading</div></div>
-    </div>
+      from,
+      to {
+        opacity: 1
+      }
 
-    <div class="svc-row">
-      <svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M155-75q-35-35-35-85t35-85q35-35 85-35 14 0 26 3t23 8l57-71q-28-31-39-70t-5-78l-81-27q-17 25-43 40t-58 15q-50 0-85-35T0-580q0-50 35-85t85-35q50 0 85 35t35 85v8l81 28q20-36 53.5-61t75.5-32v-87q-39-11-64.5-42.5T360-840q0-50 35-85t85-35q50 0 85 35t35 85q0 42-26 73.5T510-724v87q42 7 75.5 32t53.5 61l81-28v-8q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-32 0-58.5-15T739-515l-81 27q6 39-5 77.5T614-340l57 70q11-5 23-7.5t26-2.5q50 0 85 35t35 85q0 50-35 85t-85 35q-50 0-85-35t-35-85q0-20 6.5-38.5T624-232l-57-71q-41 23-87.5 23T392-303l-56 71q11 15 17.5 33.5T360-160q0 50-35 85t-85 35q-50 0-85-35Zm-35-465q17 0 28.5-11.5T160-580q0-17-11.5-28.5T120-620q-17 0-28.5 11.5T80-580q0 17 11.5 28.5T120-540Zm148.5 408.5Q280-143 280-160t-11.5-28.5Q257-200 240-200t-28.5 11.5Q200-177 200-160t11.5 28.5Q223-120 240-120t28.5-11.5Zm240-680Q520-823 520-840t-11.5-28.5Q497-880 480-880t-28.5 11.5Q440-857 440-840t11.5 28.5Q463-800 480-800t28.5-11.5ZM480-360q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Zm268.5 228.5Q760-143 760-160t-11.5-28.5Q737-200 720-200t-28.5 11.5Q680-177 680-160t11.5 28.5Q703-120 720-120t28.5-11.5Zm120-420Q880-563 880-580t-11.5-28.5Q857-620 840-620t-28.5 11.5Q800-597 800-580t11.5 28.5Q823-540 840-540t28.5-11.5ZM480-840ZM120-580Zm360 120Zm360-120ZM240-160Zm480 0Z"/></svg>
-      <div><div class="svc-title">Ecosystem Development</div></div>
-    </div>
-  </div>
-  <div class="win-statusbar"><span>5 service modules</span><span>NOX v2.1</span></div>
-</div>
-
-<!-- ═══ WINDOW: INSIGHTS ═══ -->
-<div class="win bevel-out hidden" id="insights-win" style="left:calc(50vw - 240px);top:calc(50vh - 200px);width:480px;height:400px;z-index:215;">
-  <div class="title-bar" id="insights-win-tb">
-    <div class="title-bar-text">
-      <svg width="13" height="13" style="display:inline-block;vertical-align:middle;font-variation-settings:'FILL' 1;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
-      Insights — NOX.Ventures
-    </div>
-    <div class="win-controls">
-      <button class="bevel-btn win-btn" onclick="minimizeWin('insights-win')">_</button>
-      <button class="bevel-btn win-btn" onclick="maximizeWin('insights-win')">□</button>
-      <button class="bevel-btn win-btn" onclick="closeWin('insights-win')">✕</button>
-    </div>
-  </div>
-  <div class="win-menubar"><span>File</span><span>View</span><span>Sort</span></div>
-  <div class="win-body" style="padding:0;">
-    <div style="background:#00003c;padding:12px 16px;position:relative;overflow:hidden;">
-      <div style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;"></div>
-      <div style="position:relative;z-index:1;">
-        <div style="font-size:9px;color:#6666bb;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;">NOX.VENTURES // RESEARCH</div>
-        <div style="font-size:14px;font-weight:900;color:#fff;">LATEST PUBLICATIONS</div>
-      </div>
-    </div>
-    <div class="bevel-in" style="background:#fff;margin:6px;">
-      <a href="https://medium.com/@NOX_Ventures/a16z-and-the-architecture-of-ai-capital-a-2026-edition-9d7e0dac22c9?postPublishedType=initial" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#faf9f9;" onmouseenter="this.style.background='#000080';this.style.color='#fff'" onmouseleave="this.style.background='#faf9f9';this.style.color=''">
-        <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
-        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">A16z and the Architecture of AI Capital — 2026 Edition</div></div>
-      </a>
-      <a href="https://medium.com/@NOX_Ventures/2025-perpdex-battle-of-the-titans-evolution-current-landscape-and-future-potential-a8656509874b" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#eeeeee;" onmouseenter="this.style.background='#000080';this.style.color='#fff'" onmouseleave="this.style.background='#eeeeee';this.style.color=''">
-        <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
-        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">2025 PerpDEX — Battle of the Titans</div></div>
-      </a>
-      <a href="https://medium.com/@NOX_Ventures/reassessing-the-2025-prediction-market-landscape-from-a-speculative-tool-to-a-new-financial-c5244c2598f0" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#faf9f9;" onmouseenter="this.style.background='#000080';this.style.color='#fff'" onmouseleave="this.style.background='#faf9f9';this.style.color=''">
-        <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
-        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">Reassessing the 2025 Prediction Market Landscape</div></div>
-      </a>
-      <a href="https://medium.com/@NOX_Ventures/ai-landscape-on-sui-2025-edition-1a5a57f681ef" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#eeeeee;" onmouseenter="this.style.background='#000080';this.style.color='#fff'" onmouseleave="this.style.background='#eeeeee';this.style.color=''">
-        <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
-        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">AI Landscape on Sui — 2025 Edition</div></div>
-      </a>
-    </div>
-  </div>
-  <div class="win-statusbar"><span>4 items</span><span>Disk free: 4.2 GB</span></div>
-</div>
-
-<!-- ═══ WINDOW: CONTACT ═══ -->
-<div class="win bevel-out hidden" id="contact-win" style="left:150px;top:90px;width:320px;z-index:230;">
-  <div class="title-bar" id="contact-win-tb">
-    <div class="title-bar-text">
-      <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z"/></svg>
-      Contact — NOX.Ventures
-    </div>
-    <div class="win-controls">
-      <button class="bevel-btn win-btn" onclick="minimizeWin('contact-win')">_</button>
-      <button class="bevel-btn win-btn" onclick="maximizeWin('contact-win')">□</button>
-      <button class="bevel-btn win-btn" onclick="closeWin('contact-win')">✕</button>
-    </div>
-  </div>
-  <div class="win-menubar"><span>File</span><span>View</span></div>
-  <div class="win-body" style="padding:0;">
-    <div style="background:#00003c;padding:12px 16px;position:relative;overflow:hidden;">
-      <div style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;"></div>
-      <div style="position:relative;z-index:1;">
-        <div style="font-size:9px;color:#6666bb;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;">NOX.VENTURES // GET IN TOUCH</div>
-        <div style="font-size:14px;font-weight:900;color:#fff;">REACH US</div>
-      </div>
-    </div>
-    <!-- Email -->
-    <a class="contact-btn" href="mailto:info@nox.ventures">
-      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-        <rect width="40" height="40" fill="#00003c"/>
-        <rect x="7" y="12" width="26" height="18" fill="#000080"/>
-        <path d="M7 12 L20 22 L33 12" stroke="#ffffff" stroke-width="2" fill="none"/>
-        <line x1="7" y1="30" x2="33" y2="30" stroke="#4444aa" stroke-width="1"/>
-      </svg>
-      <div>
-        <div class="contact-label">Email</div>
-        <div class="contact-sub">info@nox.ventures</div>
-      </div>
-    </a>
-    <!-- X -->
-    <a class="contact-btn" href="https://x.com/NOX_Ventures" target="_blank" rel="noopener">
-      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-        <rect width="40" height="40" fill="#00003c"/>
-        <path d="M22.6 18.4L30.8 9h-2l-7.1 8.2L15.8 9H9l8.6 12.4L9 31h2l7.5-8.7L24.2 31H31L22.6 18.4zm-2.7 3.1l-.9-1.3-7-10h3l5.6 8 .9 1.3 7.2 10.3h-3l-5.8-8.3z" fill="#ffffff"/>
-      </svg>
-      <div>
-        <div class="contact-label">X</div>
-        <div class="contact-sub">@NOX_Ventures</div>
-      </div>
-    </a>
-  </div>
-  <div class="win-statusbar"><span>2 channels available</span><span>info@nox.ventures</span></div>
-</div>
-
-<!-- ═══ TERMINAL (decorative) ═══ -->
-<div class="win bevel-out" id="terminal-win" style="left:100px;bottom:44px;width:310px;z-index:190;">
-  <div class="title-bar" id="terminal-win-tb">
-    <div class="title-bar-text">
-      <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H160v400Zm140-40-56-56 103-104-104-104 57-56 160 160-160 160Zm180 0v-80h240v80H480Z"/></svg>
-      NOX Terminal v1.0
-    </div>
-    <div class="win-controls">
-      <button class="bevel-btn win-btn" onclick="minimizeWin('terminal-win')">_</button>
-      <button class="bevel-btn win-btn" onclick="maximizeWin('terminal-win')">□</button>
-      <button class="bevel-btn win-btn" onclick="closeWin('terminal-win')">✕</button>
-    </div>
-  </div>
-  <div class="win-body bevel-in" style="background:#000820;padding:10px;font-size:10px;color:#00ff41;font-family:monospace;line-height:1.85;">
-    <div>NOX VENTURES SYSTEM v1.0.0</div>
-    <div>Copyright (C) 2025 NOX Ventures. All rights reserved.</div>
-    <div style="margin-top:6px;color:#aaaaff;">&gt; Loading portfolio data...............<span style="color:#00ff41;">OK</span></div>
-    <div style="color:#aaaaff;">&gt; Scanning deal flow...................<span style="color:#00ff41;">97 signals</span></div>
-    <div style="color:#aaaaff;">&gt; CEX partners online...................<span style="color:#00ff41;">20+</span></div>
-    <div style="color:#aaaaff;">&gt; Capital deployed YTD.................<span style="color:#ffff00;">$120M+</span></div>
-    <div style="margin-top:4px;">C:\NOX&gt;<span style="display:inline-block;width:7px;height:12px;background:#00ff41;animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;"></span></div>
-  </div>
-</div>
-
-<!-- ═══ START MENU ═══ -->
-<div id="start-menu">
-  <div class="sm-strip">NOX.Ventures</div>
-  <div class="sm-body">
-    <div class="sm-item" onclick="openWin('about-win');closeStart()">
-      <svg width="18" height="18" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
-        <rect x="4" y="3" width="30" height="22" rx="2" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
-        <rect x="6" y="5" width="26" height="17" rx="1" fill="#808080"/>
-        <rect x="7" y="6" width="24" height="15" fill="#000080"/>
-        <rect x="16" y="25" width="6" height="4" fill="#808080"/>
-        <rect x="11" y="29" width="16" height="3" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
-        <rect x="13" y="33" width="12" height="4" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1"/>
-        <circle cx="23" cy="35" r="0.7" fill="#00cc00"/>
-      </svg>
-      About us
-    </div>
-    <div class="sm-item" onclick="openWin('portfolio-win');closeStart()"><svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z"/></svg>Portfolio</div>
-    <div class="sm-item" onclick="openWin('services-win');closeStart()"><svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="m741-600-44-96-96-44 96-44 44-96 44 96 96 44-96 44-44 96Zm80 280-32-68-68-32 68-32 32-68 32 68 68 32-68 32-32 68ZM301-80l-12-94q-7-3-15-8t-13-10l-88 38-99-174 75-56v-32l-75-56 99-174 88 38q5-5 13-10t15-8l12-94h200l12 94q7 3 15 8t13 10l88-38 99 174-75 56v32l75 56-99 174-88-38q-5 5-13 10t-15 8l-12 94H301Zm185-235q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35ZM371-160h60l8-72q29-8 49.5-20.5T529-286l66 30 28-50-58-44q8-23 8-50t-8-50l58-44-28-50-66 30q-20-21-40.5-33.5T439-568l-8-72h-60l-8 72q-29 8-49.5 20.5T273-514l-66-30-28 50 58 44q-8 23-8.5 50t8.5 50l-58 44 28 50 66-30q20 21 40.5 33.5T363-232l8 72Zm30-240Z"/></svg>Services</div>
-    <div class="sm-item" onclick="openWin('insights-win');closeStart()"><svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>Insights</div>
-    <div class="sm-item" onclick="openWin('contact-win');closeStart()"><svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z"/></svg>Contact</div>
-    <div class="sm-item" onclick="openWin('terminal-win');closeStart()"><svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H160v400Zm140-40-56-56 103-104-104-104 57-56 160 160-160 160Zm180 0v-80h240v80H480Z"/></svg>Terminal</div>
-    <div class="sm-divider"></div>
-    <div class="sm-item" onclick="closeStart()"><svg width="20" height="20" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;" fill="currentColor" height="24" viewBox="0 -960 960 960" width="24"><path d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-84 31.5-156.5T197-763l56 56q-44 44-68.5 102T160-480q0 134 93 227t227 93q134 0 227-93t93-227q0-67-24.5-125T707-707l56-56q54 54 85.5 126.5T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-40-360v-440h80v440h-80Z"/></svg>Shut Down</div>
-  </div>
-</div>
-
-<!-- ═══ TASKBAR ═══ -->
-<div id="taskbar">
-  <button class="bevel-btn" id="start-btn" onclick="toggleStart()" style="height:24px;padding:0 10px;font-weight:900;font-size:11px;font-style:italic;display:flex;align-items:center;gap:5px;flex-shrink:0;color:#000;">
-    <span style="font-size:15px;">⊞</span> Start
-  </button>
-  <div class="tb-sep"></div>
-  <div id="tb-items" style="display:flex;gap:2px;flex:1;overflow:hidden;align-items:center;height:100%;"></div>
-  <div class="tb-sep"></div>
-  <!-- BTC + ETH prices + clock -->
-  <div class="bevel-in" style="background:#c0c0c0;height:24px;padding:0 10px;display:flex;align-items:center;gap:10px;font-size:10px;font-weight:700;flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:3px;">
-      <span class="ticker-label">BTC</span>
-      <span class="ticker-val" id="tick-btc">—</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:3px;">
-      <span class="ticker-label">ETH</span>
-      <span class="ticker-val" id="tick-eth">—</span>
-    </div>
-    <div class="tb-sep" style="height:18px;"></div>
-    <span id="clock" style="font-size:10px;font-weight:700;">--:--</span>
-  </div>
-</div>
-
-<!-- BG watermark -->
-<div style="position:fixed;bottom:44px;right:8px;opacity:.28;pointer-events:none;text-align:right;font-size:9px;font-family:monospace;color:#fff;text-transform:uppercase;line-height:1.9;letter-spacing:.07em;">
-  SYSTEM READY — NOX.VENTURES (C) 2025<br/>
-  ALL SYSTEMS NOMINAL // INCUBATION IN PROGRESS<br/>
-  BUILD: 2025.04.06 // KERNEL: SOVEREIGN-1.0
-</div>
-
-<!-- ═══ JAVASCRIPT ═══ -->
-<script>
-/* ── Registry ── */
-const WINS = {
-  'about-win':     { title:'About us',  icon:'info' },
-  'portfolio-win': { title:'Portfolio', icon:'folder' },
-  'services-win':  { title:'Services',  icon:'settings_suggest' },
-  'insights-win':  { title:'Insights',  icon:'article' },
-  'contact-win':   { title:'Contact',   icon:'mail' },
-  'terminal-win':  { title:'Terminal',  icon:'terminal' },
-};
-const _min = {};
-let zTop = 300;
-
-function bringToFront(id) { zTop++; document.getElementById(id).style.zIndex = zTop; renderTB(); }
-
-function openWin(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('hidden');
-  if (_min[id]) {
-    Object.assign(el.style, { left:_min[id].l, top:_min[id].t, width:_min[id].w, height:_min[id].h||'' });
-    delete _min[id];
-  }
-  bringToFront(id);
-}
-function closeWin(id)    { document.getElementById(id).classList.add('hidden'); renderTB(); }
-function minimizeWin(id) {
-  const el = document.getElementById(id);
-  _min[id] = { l:el.style.left, t:el.style.top, w:el.style.width, h:el.style.height };
-  el.classList.add('hidden'); renderTB();
-}
-function maximizeWin(id) {
-  const el = document.getElementById(id);
-  if (el.dataset.mx==='1') {
-    Object.assign(el.style,{left:el.dataset.pl,top:el.dataset.pt,width:el.dataset.pw,height:el.dataset.ph||'',maxHeight:el.dataset.pmh||'',transform:el.dataset.ptr||''});
-    el.dataset.mx='0';
-  } else {
-    Object.assign(el.dataset,{pl:el.style.left,pt:el.style.top,pw:el.style.width,ph:el.style.height,pmh:el.style.maxHeight||'',ptr:el.style.transform||''});
-    Object.assign(el.style,{left:'0px',top:'0px',width:'100vw',height:'auto',maxHeight:'calc(100vh - 32px)',transform:'none'});
-    el.dataset.mx='1';
-  }
-  bringToFront(id);
-}
-
-/* ── Taskbar ── */
-function renderTB() {
-  const c = document.getElementById('tb-items');
-  c.innerHTML = '';
-  for (const [id,meta] of Object.entries(WINS)) {
-    const el = document.getElementById(id);
-    if (!el) continue;
-    const hidden = el.classList.contains('hidden');
-    const btn = document.createElement('div');
-    btn.style.cssText = `height:24px;padding:0 8px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;min-width:80px;max-width:130px;overflow:hidden;white-space:nowrap;background:#c0c0c0;${hidden?'border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #5d5e5f;border-bottom:2px solid #5d5e5f;':'border-top:2px solid #5d5e5f;border-left:2px solid #5d5e5f;border-right:2px solid #fff;border-bottom:2px solid #fff;'}`;
-    btn.innerHTML = `<img src="icons/${meta.icon}.svg" width="12" height="12" style="display:inline-block;vertical-align:middle;margin-right:2px;" />${meta.title}`;
-    btn.onclick = () => hidden ? openWin(id) : minimizeWin(id);
-    c.appendChild(btn);
-  }
-}
-
-/* ── Drag ── */
-function makeDraggable(id) {
-  const win = document.getElementById(id);
-  const tb  = document.getElementById(id+'-tb');
-  if (!win||!tb) return;
-  tb.addEventListener('mousedown', e => {
-    if (e.target.classList.contains('win-btn')||e.target.classList.contains('bevel-btn')) return;
-    bringToFront(id);
-    const r=win.getBoundingClientRect(), ox=e.clientX-r.left, oy=e.clientY-r.top;
-    const mv = ev => { win.style.left=Math.max(0,ev.clientX-ox)+'px'; win.style.top=Math.max(0,ev.clientY-oy)+'px'; };
-    const up = () => { document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
-    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up); e.preventDefault();
-  });
-  win.addEventListener('mousedown', () => bringToFront(id));
-}
-for (const id of Object.keys(WINS)) makeDraggable(id);
-
-/* ── Icon select ── */
-function selIcon(el) { document.querySelectorAll('.desk-icon').forEach(i=>i.classList.remove('selected')); el.classList.add('selected'); }
-
-/* ── Start menu ── */
-let _so = false;
-function toggleStart() { _so=!_so; document.getElementById('start-menu').classList.toggle('open',_so); }
-function closeStart()  { _so=false; document.getElementById('start-menu').classList.remove('open'); }
-document.addEventListener('click', e => { if(_so&&!e.target.closest('#start-menu')&&!e.target.closest('#start-btn')) closeStart(); });
-
-/* ── Clock ── */
-function tick() {
-  const n=new Date();
-  document.getElementById('clock').textContent = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-}
-tick(); setInterval(tick,15000);
-
-/* ── Live BTC & ETH — Binance WebSocket (real-time, no CORS) ── */
-(function startTicker() {
-  const prevPrices = { btcusdt: null, ethusdt: null };
-
-  function updateEl(sym, price) {
-    const id  = sym === 'btcusdt' ? 'tick-btc' : 'tick-eth';
-    const el  = document.getElementById(id);
-    const prev = prevPrices[sym];
-    prevPrices[sym] = price;
-    el.textContent = '$' + price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    el.className   = 'ticker-val ' + (prev === null || price >= prev ? 'ticker-up' : 'ticker-dn');
-  }
-
-  function connect() {
-    const ws = new WebSocket(
-      'wss://stream.binance.com:9443/stream?streams=btcusdt@miniTicker/ethusdt@miniTicker'
-    );
-    ws.onmessage = e => {
-      try {
-        const { data } = JSON.parse(e.data);
-        if (!data) return;
-        const sym   = data.s.toLowerCase();
-        const price = parseFloat(data.c);
-        if (sym === 'btcusdt' || sym === 'ethusdt') updateEl(sym, price);
-      } catch(_) {}
-    };
-    ws.onerror = ws.onclose = () => {
-      // reconnect after 5s if disconnected
-      setTimeout(connect, 5000);
-    };
-  }
-
-  connect();
-})();
-
-/* ── Typing effect — 3 separate paragraphs ── */
-const PARAS = [
-  "We live on the frontier of Web3 and believe in progress through innovation.",
-  "We partner with ambitious teams from the earliest stages, acting as strategic co-founders to guide projects from idea to exchange listing.",
-  "If you're building something ambitious at the frontier of Web3, come build with us."
-];
-
-function typeParas() {
-  const cursor = document.getElementById('terminal-cursor');
-  const els = ['para1','para2','para3'].map(id => document.getElementById(id));
-  let pi=0, ci=0;
-
-  els.forEach(e => { e.textContent=''; e.style.display='none'; });
-  els[0].style.display='';
-  cursor.style.display='inline-block';
-  // place cursor after para[0]
-  els[0].after(cursor);
-
-  const iv = setInterval(() => {
-    const txt = PARAS[pi];
-    if (ci < txt.length) {
-      els[pi].textContent += txt[ci++];
-    } else {
-      pi++;
-      if (pi < PARAS.length) {
-        ci=0;
-        els[pi].style.display='';
-        els[pi].after(cursor); // move cursor after the new paragraph
-      } else {
-        clearInterval(iv);
-        cursor.style.display='none';
+      50% {
+        opacity: 0
       }
     }
-  }, 22);
-}
 
-window.addEventListener('load', () => {
-  renderTB();
-  setTimeout(typeParas, 600);
-});
-</script>
+    /* ── Desktop icons ── */
+    .desk-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 68px;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .desk-icon:hover .icon-label {
+      background: #000080;
+      color: #fff;
+    }
+
+    .icon-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+      padding: 1px 3px;
+      text-shadow: 1px 1px 0 #000, -1px 0 0 #000;
+      line-height: 1.3;
+    }
+
+    /* ── Portfolio icons ── */
+    .port-icon-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 8px;
+      cursor: pointer;
+      text-decoration: none;
+      color: #000;
+    }
+
+    .port-icon-wrap:hover .port-icon-bg {
+      background: #000080;
+    }
+
+    .port-icon-wrap:hover .port-name {
+      background: #000080;
+      color: #fff;
+      outline: 1px dotted #fff;
+    }
+
+    .port-icon-bg {
+      width: 48px;
+      height: 48px;
+      background: #eeeeee;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #808080;
+      border-bottom: 2px solid #808080;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .port-icon-img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+    }
+
+    .port-name {
+      font-size: 9px;
+      font-weight: 700;
+      text-align: center;
+      max-width: 64px;
+      word-break: break-word;
+      padding: 1px 2px;
+      line-height: 1.2;
+    }
+
+    /* ── Services ── */
+    .svc-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+    }
+
+    .svc-row:nth-child(odd) {
+      background: #faf9f9;
+    }
+
+    .svc-row:nth-child(even) {
+      background: #eeeeee;
+    }
+
+    .svc-icon {
+      font-size: 20px;
+      color: #00003c;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .svc-title {
+      font-size: 11px;
+      font-weight: 900;
+      color: #00003c;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 3px;
+    }
+
+    .svc-desc {
+      font-size: 10px;
+      color: #464653;
+      line-height: 1.6;
+    }
+
+    /* ── Contact ── */
+    .contact-btn {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      text-decoration: none;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .contact-btn:nth-child(odd) {
+      background: #faf9f9;
+    }
+
+    .contact-btn:nth-child(even) {
+      background: #eeeeee;
+    }
+
+    .contact-btn:hover {
+      background: #000080;
+      color: #fff;
+    }
+
+    .contact-label {
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .contact-sub {
+      font-size: 10px;
+      opacity: .7;
+      margin-top: 3px;
+    }
+
+    /* ── NOX ASCII art (from PDF cover) ── */
+    #nox-ascii-bg {
+      position: fixed;
+      inset: 0;
+      bottom: 32px;
+      background: url('images/nox-bg.jpeg') center center / cover no-repeat;
+      opacity: 0.07;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Scrollbar Win98 ── */
+    ::-webkit-scrollbar {
+      width: 16px;
+      height: 16px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #c0c0c0;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #c0c0c0;
+      border-top: 2px solid #fff;
+      border-left: 2px solid #fff;
+      border-right: 2px solid #808080;
+      border-bottom: 2px solid #808080;
+    }
+
+    /* ── 最大化窗口优化 ── */
+    .win[data-mx="1"] {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .win[data-mx="1"] .win-body {
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      min-height: 0 !important;
+    }
+
+    /* ── Mobile Responsive ── */
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      /* 调整窗口大小和位置 */
+      .win {
+        width: 95% !important;
+        max-width: none !important;
+        left: 2.5% !important;
+        right: 2.5% !important;
+        height: auto !important;
+      }
+
+      /* Terminal 窗口 */
+      #terminal-win {
+        bottom: 44px !important;
+        width: 95% !important;
+        left: 2.5% !important;
+        max-height: 40vh !important;
+      }
+
+      /* Portfolio 窗口 */
+      #portfolio-win {
+        top: 50px !important;
+        width: 95% !important;
+        left: 2.5% !important;
+        max-height: calc(100vh - 100px) !important;
+      }
+
+      /* Contact 窗口 */
+      #contact-win {
+        top: 50px !important;
+        width: 95% !important;
+        left: 2.5% !important;
+        max-height: calc(100vh - 100px) !important;
+      }
+
+      /* About 窗口 - 移动端优化 */
+      #about-win {
+        top: 50px !important;
+        width: 95% !important;
+        left: 2.5% !important;
+        max-height: calc(100vh - 100px) !important;
+      }
+
+      /* About 窗口内容优化 */
+      #about-win .win-body>div:first-child {
+        padding: 16px 16px 12px !important;
+      }
+
+      #about-win .win-body>div:first-child>div:last-child>div:nth-child(2) {
+        font-size: 18px !important;
+        line-height: 1.15 !important;
+      }
+
+      #about-win .win-body>div:nth-child(2) {
+        padding: 16px 16px 12px !important;
+      }
+
+      #about-win .win-body p {
+        font-size: 11px !important;
+        line-height: 1.65 !important;
+      }
+
+      /* Portfolio 网格调整为单列 */
+      .port-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+
+      /* Contact 项目调整 */
+      .contact-item {
+        padding: 8px !important;
+      }
+
+      /* 字体大小微调 */
+      .title-bar-text {
+        font-size: 10px !important;
+      }
+
+      .win-menubar {
+        font-size: 9px !important;
+      }
+
+      /* Terminal 文字 */
+      #terminal-win .win-body {
+        font-size: 9px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+
+      /* 更小屏幕优化 */
+      .port-card {
+        padding: 10px !important;
+      }
+
+      .port-name {
+        font-size: 12px !important;
+      }
+
+      .port-desc {
+        font-size: 9px !important;
+      }
+
+      .win-controls {
+        gap: 1px !important;
+      }
+
+      .win-btn {
+        width: 14px !important;
+        height: 12px !important;
+        font-size: 9px !important;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+
+  <!-- NOX ASCII background (from PDF) -->
+  <div id="nox-ascii-bg"></div>
+
+  <!-- ═══ DESKTOP ICONS ═══ -->
+  <div
+    style="position:fixed;inset:0;bottom:32px;padding:14px 0 0 10px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;z-index:10;pointer-events:none;">
+
+    <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('about-win')" onclick="selIcon(this)">
+      <svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg"
+        style="filter:drop-shadow(1px 1px 0 #000)">
+        <!-- Monitor body -->
+        <rect x="4" y="3" width="30" height="22" rx="2" fill="#c0c0c0" stroke="#fff" stroke-width="1" />
+        <rect x="4" y="3" width="30" height="22" rx="2" fill="none" stroke="#808080" stroke-width="1"
+          stroke-dasharray="0" style="stroke-dashoffset:0" />
+        <!-- Screen bezel -->
+        <rect x="6" y="5" width="26" height="17" rx="1" fill="#808080" />
+        <!-- Screen (blue desktop) -->
+        <rect x="7" y="6" width="24" height="15" fill="#000080" />
+        <!-- Screen shine -->
+        <rect x="7" y="6" width="24" height="4" fill="#0000aa" opacity="0.5" />
+        <!-- Monitor base neck -->
+        <rect x="16" y="25" width="6" height="4" fill="#808080" />
+        <!-- Monitor stand/base -->
+        <rect x="11" y="29" width="16" height="3" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1" />
+        <!-- System unit (tower) below - small box -->
+        <rect x="13" y="33" width="12" height="4" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1" />
+        <!-- Floppy slot -->
+        <rect x="15" y="34" width="5" height="1" fill="#808080" />
+        <!-- Power LED -->
+        <circle cx="23" cy="35" r="0.7" fill="#00cc00" />
+      </svg>
+      <div class="icon-label">About us</div>
+    </div>
+
+    <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('services-win')" onclick="selIcon(this)">
+      <svg width="38" height="38"
+        style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000)"
+        fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+        <path
+          d="m741-600-44-96-96-44 96-44 44-96 44 96 96 44-96 44-44 96Zm80 280-32-68-68-32 68-32 32-68 32 68 68 32-68 32-32 68ZM301-80l-12-94q-7-3-15-8t-13-10l-88 38-99-174 75-56v-32l-75-56 99-174 88 38q5-5 13-10t15-8l12-94h200l12 94q7 3 15 8t13 10l88-38 99 174-75 56v32l75 56-99 174-88-38q-5 5-13 10t-15 8l-12 94H301Zm185-235q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35ZM371-160h60l8-72q29-8 49.5-20.5T529-286l66 30 28-50-58-44q8-23 8-50t-8-50l58-44-28-50-66 30q-20-21-40.5-33.5T439-568l-8-72h-60l-8 72q-29 8-49.5 20.5T273-514l-66-30-28 50 58 44q-8 23-8.5 50t8.5 50l-58 44 28 50 66-30q20 21 40.5 33.5T363-232l8 72Zm30-240Z" />
+      </svg>
+      <div class="icon-label">Services</div>
+    </div>
+
+    <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('portfolio-win')" onclick="selIcon(this)">
+      <svg width="38" height="38"
+        style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000);font-variation-settings:'FILL' 1;"
+        fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+        <path
+          d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z" />
+      </svg>
+      <div class="icon-label">Portfolio</div>
+    </div>
+
+    <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('insights-win')" onclick="selIcon(this)">
+      <svg width="38" height="38"
+        style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000);font-variation-settings:'FILL' 1;"
+        fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+        <path
+          d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+      </svg>
+      <div class="icon-label">Insights</div>
+    </div>
+
+    <div class="desk-icon" style="pointer-events:all;" ondblclick="openWin('contact-win')" onclick="selIcon(this)">
+      <svg width="38" height="38"
+        style="display:inline-block;vertical-align:middle;color:#fff;filter:drop-shadow(1px 1px 0 #000)"
+        fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+        <path
+          d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z" />
+      </svg>
+      <div class="icon-label">Contact</div>
+    </div>
+
+  </div>
+
+  <!-- ═══ WINDOW: ABOUT Us ═══ -->
+  <div class="win bevel-out" id="about-win"
+    style="left:100px;top:28px;width:610px;z-index:200;max-height:calc(100vh - 60px);">
+    <div class="title-bar" id="about-win-tb">
+      <div class="title-bar-text">
+        <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24"
+          viewBox="0 -960 960 960" width="24">
+          <path
+            d="M440-280h80v-240h-80v240Zm68.5-331.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+        </svg>
+        About us — NOX.Ventures
+      </div>
+      <div class="win-controls">
+        <button class="bevel-btn win-btn" onclick="minimizeWin('about-win')">_</button>
+        <button class="bevel-btn win-btn" onclick="maximizeWin('about-win')">□</button>
+        <button class="bevel-btn win-btn" onclick="closeWin('about-win')">✕</button>
+      </div>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
+    <div class="win-body" style="padding:0;">
+
+      <!-- Dark NOX header with ASCII texture -->
+      <div style="background:#00003c;padding:20px 24px 16px;position:relative;overflow:hidden;">
+        <div
+          style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;">
+        </div>
+        <div style="position:relative;z-index:1;">
+          <div
+            style="font-size:9px;font-weight:700;color:#6666bb;text-transform:uppercase;letter-spacing:.2em;margin-bottom:8px;">
+            NOX.VENTURES // EST. 2025</div>
+          <div
+            style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-.02em;line-height:1.08;text-transform:uppercase;">
+            FULL-LIFECYCLE<br />CRYPTO INCUBATION FUND</div>
+          <div
+            style="font-size:9px;font-weight:700;color:#6666bb;letter-spacing:.12em;text-transform:uppercase;margin-top:10px;">
+            ACTING AS STRATEGIC CO-FOUNDER FOR HIGH-POTENTIAL CRYPTO TEAMS</div>
+        </div>
+      </div>
+
+      <!-- Body copy — three paragraphs typed -->
+      <div style="background:#faf9f9;padding:20px 24px 16px;border-top:2px solid #5555aa;">
+        <div id="typing-container" style="min-height:110px;">
+          <p id="para1" style="font-size:12px;line-height:1.75;color:#1a1c1c;"></p>
+          <p id="para2" style="font-size:12px;line-height:1.75;color:#1a1c1c;margin-top:14px;display:none;"></p>
+          <p id="para3" style="font-size:12px;line-height:1.75;color:#1a1c1c;margin-top:14px;display:none;"></p>
+          <span class="cursor" id="terminal-cursor"></span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:18px;">
+          <button class="bevel-btn"
+            style="padding:5px 16px;font-size:10px;font-weight:900;text-transform:uppercase;color:#00003c;letter-spacing:.04em;"
+            onclick="openWin('contact-win')">CONTACT US</button>
+          <button class="bevel-btn"
+            style="padding:5px 16px;font-size:10px;font-weight:900;text-transform:uppercase;color:#00003c;letter-spacing:.04em;"
+            onclick="openWin('portfolio-win')">VIEW PORTFOLIO</button>
+        </div>
+      </div>
+
+      <!-- Stats row — updated values -->
+      <div style="display:flex;background:#eeeeee;border-top:2px solid #808080;">
+        <div style="flex:1;padding:10px 12px;border-right:2px solid #808080;">
+          <div
+            style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
+            AUM</div>
+          <div style="font-size:16px;font-weight:900;color:#00003c;">$120M+</div>
+        </div>
+        <div style="flex:1;padding:10px 12px;border-right:2px solid #808080;">
+          <div
+            style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
+            MEDIA / KOLs</div>
+          <div style="font-size:16px;font-weight:900;color:#00003c;">500+</div>
+        </div>
+        <div style="flex:1;padding:10px 12px;border-right:2px solid #808080;">
+          <div
+            style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
+            COMMUNITY</div>
+          <div style="font-size:16px;font-weight:900;color:#00003c;">500+</div>
+        </div>
+        <div style="flex:1;padding:10px 12px;">
+          <div
+            style="font-size:8px;color:#5d5e5f;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">
+            CEX PARTNERS</div>
+          <div style="font-size:16px;font-weight:900;color:#00003c;">20+</div>
+        </div>
+      </div>
+    </div>
+    <div class="win-statusbar">
+      <span>NOX.Ventures // Full-Lifecycle Crypto Incubation</span>
+      <span>EST. 2025</span>
+    </div>
+  </div>
+
+  <!-- ═══ WINDOW: PORTFOLIO ═══ -->
+  <div class="win bevel-out hidden" id="portfolio-win" style="right:20px;top:28px;width:520px;z-index:210;">
+    <div class="title-bar" id="portfolio-win-tb">
+      <div class="title-bar-text">
+        <svg width="13" height="13" style="display:inline-block;vertical-align:middle;font-variation-settings:'FILL' 1;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z" />
+        </svg>
+        Portfolio — NOX.Ventures
+      </div>
+      <div class="win-controls">
+        <button class="bevel-btn win-btn" onclick="minimizeWin('portfolio-win')">_</button>
+        <button class="bevel-btn win-btn" onclick="maximizeWin('portfolio-win')">□</button>
+        <button class="bevel-btn win-btn" onclick="closeWin('portfolio-win')">✕</button>
+      </div>
+    </div>
+    <div class="win-menubar"><span>File</span><span>View</span><span>Sort by Name</span></div>
+    <div class="win-body bevel-in" style="background:#fff;padding:8px 4px;">
+      <div class="win-body bevel-in" style="background:#fff;padding:8px 4px;">
+        <div style="display:flex;flex-wrap:wrap;">
+          <a class="port-icon-wrap" href="https://sign.global/" target="_blank" rel="noopener">
+            <div class="port-icon-bg"><img class="port-icon-img" src="./images/sign-logo.png" alt="Sign" /></div>
+            <div class="port-name">Sign</div>
+          </a>
+
+          <a class="port-icon-wrap" href="https://talus.network/" target="_blank" rel="noopener">
+            <div class="port-icon-bg"><img class="port-icon-img" src="./images/talus-logo.png" alt="Talus" /></div>
+            <div class="port-name">Talus</div>
+          </a>
+
+          <a class="port-icon-wrap" href="https://www.cetus.zone/" target="_blank" rel="noopener">
+            <div class="port-icon-bg"><img class="port-icon-img" src="./images/cetus-logo.png" alt="Cetus" /></div>
+            <div class="port-name">Cetus</div>
+          </a>
+
+          <a class="port-icon-wrap" href="https://surgeai.io/en" target="_blank" rel="noopener">
+            <div class="port-icon-bg"><img class="port-icon-img" src="./images/surge-logo.png" alt="Surge" /></div>
+            <div class="port-name">Surge</div>
+          </a>
+
+          <a class="port-icon-wrap" href="https://www.metis.io/" target="_blank" rel="noopener">
+            <div class="port-icon-bg" style="background:#00003c;"><img class="port-icon-img"
+                src="./images/metis-logo.png" style="width:32px;height:32px;object-fit:contain;" alt="Metis" /></div>
+            <div class="port-name">Metis</div>
+          </a>
+
+          <a class="port-icon-wrap" href="https://gaiai.io/" target="_blank" rel="noopener">
+            <div class="port-icon-bg" style="background:#0a0a1a;">
+              <img class="port-icon-img" src="./images/gaiai-logo.png"
+                style="width:32px;height:32px;object-fit:contain;" alt="Gaiai" />
+            </div>
+            <div class="port-name">GaiAI</div>
+          </a>
+
+          <a class="port-icon-wrap" href="https://nfkings.com/" target="_blank" rel="noopener">
+            <div class="port-icon-bg"><img class="port-icon-img" src="./images/nfkings-logo.webp"
+                style="width:38px;height:38px;object-fit:contain;" alt="NFKings" /></div>
+            <div class="port-name">NFKings</div>
+          </a>
+
+        </div>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>7 objects</span><span>Disk free: 4.2 GB</span></div>
+  </div>
+
+  <!-- ═══ WINDOW: SERVICES ═══ -->
+  <div class="win bevel-out hidden" id="services-win" style="right:30px;top:60px;width:360px;z-index:220;">
+    <div class="title-bar" id="services-win-tb">
+      <div class="title-bar-text">
+        <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24"
+          viewBox="0 -960 960 960" width="24">
+          <path
+            d="m741-600-44-96-96-44 96-44 44-96 44 96 96 44-96 44-44 96Zm80 280-32-68-68-32 68-32 32-68 32 68 68 32-68 32-32 68ZM301-80l-12-94q-7-3-15-8t-13-10l-88 38-99-174 75-56v-32l-75-56 99-174 88 38q5-5 13-10t15-8l12-94h200l12 94q7 3 15 8t13 10l88-38 99 174-75 56v32l75 56-99 174-88-38q-5 5-13 10t-15 8l-12 94H301Zm185-235q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35ZM371-160h60l8-72q29-8 49.5-20.5T529-286l66 30 28-50-58-44q8-23 8-50t-8-50l58-44-28-50-66 30q-20-21-40.5-33.5T439-568l-8-72h-60l-8 72q-29 8-49.5 20.5T273-514l-66-30-28 50 58 44q-8 23-8.5 50t8.5 50l-58 44 28 50 66-30q20 21 40.5 33.5T363-232l8 72Zm30-240Z" />
+        </svg>
+        Services — NOX.Ventures
+      </div>
+      <div class="win-controls">
+        <button class="bevel-btn win-btn" onclick="minimizeWin('services-win')">_</button>
+        <button class="bevel-btn win-btn" onclick="maximizeWin('services-win')">□</button>
+        <button class="bevel-btn win-btn" onclick="closeWin('services-win')">✕</button>
+      </div>
+    </div>
+    <div class="win-menubar"><span>File</span><span>View</span><span>Help</span></div>
+    <div class="win-body" style="padding:0;">
+      <div style="background:#00003c;padding:12px 16px;position:relative;overflow:hidden;">
+        <div
+          style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;">
+        </div>
+        <div style="position:relative;z-index:1;">
+          <div style="font-size:9px;color:#6666bb;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;">
+            NOX.VENTURES // CAPABILITIES</div>
+          <div style="font-size:14px;font-weight:900;color:#fff;letter-spacing:-.01em;">WHAT WE DO</div>
+        </div>
+      </div>
+
+      <div class="svc-row">
+        <svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path d="m136-240-56-56 296-298 160 160 208-206H640v-80h240v240h-80v-104L536-320 376-480 136-240Z" />
+        </svg>
+        <div>
+          <div class="svc-title">Venture Capital</div>
+        </div>
+      </div>
+
+      <div class="svc-row">
+        <svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M423.5-103.5Q400-127 400-160h160q0 33-23.5 56.5T480-80q-33 0-56.5-23.5ZM320-200v-80h320v80H320Zm10-120q-69-41-109.5-110T180-580q0-125 87.5-212.5T480-880q125 0 212.5 87.5T780-580q0 81-40.5 150T630-320H330Zm24-80h252q45-32 69.5-79T700-580q0-92-64-156t-156-64q-92 0-156 64t-64 156q0 54 24.5 101t69.5 79Zm126 0Z" />
+        </svg>
+        <div>
+          <div class="svc-title">Advisory &amp; Incubation</div>
+        </div>
+      </div>
+
+      <div class="svc-row">
+        <svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M720-440v-80h160v80H720Zm48 280-128-96 48-64 128 96-48 64Zm-80-480-48-64 128-96 48 64-128 96ZM200-200v-160h-40q-33 0-56.5-23.5T80-440v-80q0-33 23.5-56.5T160-600h160l200-120v480L320-360h-40v160h-80Zm240-182v-196l-98 58H160v80h182l98 58Zm120 36v-268q27 24 43.5 58.5T620-480q0 41-16.5 75.5T560-346ZM300-480Z" />
+        </svg>
+        <div>
+          <div class="svc-title">Marketing &amp; Community</div>
+        </div>
+      </div>
+
+      <div class="svc-row">
+        <svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M280-160v-80h-80v-480h80v-80h80v80h80v480h-80v80h-80Zm0-160h80v-320h-80v320Zm320 160v-200h-80v-280h80v-160h80v160h80v280h-80v200h-80Zm0-280h80v-120h-80v120Zm-280-40Zm320-20Z" />
+        </svg>
+        <div>
+          <div class="svc-title">Capital Markets &amp; Trading</div>
+        </div>
+      </div>
+
+      <div class="svc-row">
+        <svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M155-75q-35-35-35-85t35-85q35-35 85-35 14 0 26 3t23 8l57-71q-28-31-39-70t-5-78l-81-27q-17 25-43 40t-58 15q-50 0-85-35T0-580q0-50 35-85t85-35q50 0 85 35t35 85v8l81 28q20-36 53.5-61t75.5-32v-87q-39-11-64.5-42.5T360-840q0-50 35-85t85-35q50 0 85 35t35 85q0 42-26 73.5T510-724v87q42 7 75.5 32t53.5 61l81-28v-8q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-32 0-58.5-15T739-515l-81 27q6 39-5 77.5T614-340l57 70q11-5 23-7.5t26-2.5q50 0 85 35t35 85q0 50-35 85t-85 35q-50 0-85-35t-35-85q0-20 6.5-38.5T624-232l-57-71q-41 23-87.5 23T392-303l-56 71q11 15 17.5 33.5T360-160q0 50-35 85t-85 35q-50 0-85-35Zm-35-465q17 0 28.5-11.5T160-580q0-17-11.5-28.5T120-620q-17 0-28.5 11.5T80-580q0 17 11.5 28.5T120-540Zm148.5 408.5Q280-143 280-160t-11.5-28.5Q257-200 240-200t-28.5 11.5Q200-177 200-160t11.5 28.5Q223-120 240-120t28.5-11.5Zm240-680Q520-823 520-840t-11.5-28.5Q497-880 480-880t-28.5 11.5Q440-857 440-840t11.5 28.5Q463-800 480-800t28.5-11.5ZM480-360q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Zm268.5 228.5Q760-143 760-160t-11.5-28.5Q737-200 720-200t-28.5 11.5Q680-177 680-160t11.5 28.5Q703-120 720-120t28.5-11.5Zm120-420Q880-563 880-580t-11.5-28.5Q857-620 840-620t-28.5 11.5Q800-597 800-580t11.5 28.5Q823-540 840-540t28.5-11.5ZM480-840ZM120-580Zm360 120Zm360-120ZM240-160Zm480 0Z" />
+        </svg>
+        <div>
+          <div class="svc-title">Ecosystem Development</div>
+        </div>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>5 service modules</span><span>NOX v2.1</span></div>
+  </div>
+
+  <!-- ═══ WINDOW: INSIGHTS ═══ -->
+  <div class="win bevel-out hidden" id="insights-win"
+    style="left:calc(50vw - 240px);top:calc(50vh - 200px);width:480px;height:400px;z-index:215;">
+    <div class="title-bar" id="insights-win-tb">
+      <div class="title-bar-text">
+        <svg width="13" height="13" style="display:inline-block;vertical-align:middle;font-variation-settings:'FILL' 1;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+        </svg>
+        Insights — NOX.Ventures
+      </div>
+      <div class="win-controls">
+        <button class="bevel-btn win-btn" onclick="minimizeWin('insights-win')">_</button>
+        <button class="bevel-btn win-btn" onclick="maximizeWin('insights-win')">□</button>
+        <button class="bevel-btn win-btn" onclick="closeWin('insights-win')">✕</button>
+      </div>
+    </div>
+    <div class="win-menubar"><span>File</span><span>View</span><span>Sort</span></div>
+    <div class="win-body" style="padding:0;">
+      <div style="background:#00003c;padding:12px 16px;position:relative;overflow:hidden;">
+        <div
+          style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;">
+        </div>
+        <div style="position:relative;z-index:1;">
+          <div style="font-size:9px;color:#6666bb;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;">
+            NOX.VENTURES // RESEARCH</div>
+          <div style="font-size:14px;font-weight:900;color:#fff;">LATEST PUBLICATIONS</div>
+        </div>
+      </div>
+      <div class="bevel-in" style="background:#fff;margin:6px;">
+        <a href="https://medium.com/@NOX_Ventures/a16z-and-the-architecture-of-ai-capital-a-2026-edition-9d7e0dac22c9?postPublishedType=initial"
+          target="_blank" rel="noopener"
+          style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#faf9f9;"
+          onmouseenter="this.style.background='#000080';this.style.color='#fff'"
+          onmouseleave="this.style.background='#faf9f9';this.style.color=''">
+          <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;"
+            fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+            <path
+              d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+          </svg>
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">A16z and the
+              Architecture of AI Capital — 2026 Edition</div>
+          </div>
+        </a>
+        <a href="https://medium.com/@NOX_Ventures/2025-perpdex-battle-of-the-titans-evolution-current-landscape-and-future-potential-a8656509874b"
+          target="_blank" rel="noopener"
+          style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#eeeeee;"
+          onmouseenter="this.style.background='#000080';this.style.color='#fff'"
+          onmouseleave="this.style.background='#eeeeee';this.style.color=''">
+          <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;"
+            fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+            <path
+              d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+          </svg>
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">2025 PerpDEX — Battle
+              of the Titans</div>
+          </div>
+        </a>
+        <a href="https://medium.com/@NOX_Ventures/reassessing-the-2025-prediction-market-landscape-from-a-speculative-tool-to-a-new-financial-c5244c2598f0"
+          target="_blank" rel="noopener"
+          style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#faf9f9;"
+          onmouseenter="this.style.background='#000080';this.style.color='#fff'"
+          onmouseleave="this.style.background='#faf9f9';this.style.color=''">
+          <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;"
+            fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+            <path
+              d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+          </svg>
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">Reassessing the 2025
+              Prediction Market Landscape</div>
+          </div>
+        </a>
+        <a href="https://medium.com/@NOX_Ventures/ai-landscape-on-sui-2025-edition-1a5a57f681ef" target="_blank"
+          rel="noopener"
+          style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;padding:9px 10px;cursor:pointer;background:#eeeeee;"
+          onmouseenter="this.style.background='#000080';this.style.color='#fff'"
+          onmouseleave="this.style.background='#eeeeee';this.style.color=''">
+          <svg width="22" height="22" style="display:inline-block;vertical-align:middle;flex-shrink:0;color:inherit;"
+            fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+            <path
+              d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+          </svg>
+          <div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;line-height:1.2;">AI Landscape on Sui —
+              2025 Edition</div>
+          </div>
+        </a>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>4 items</span><span>Disk free: 4.2 GB</span></div>
+  </div>
+
+  <!-- ═══ WINDOW: CONTACT ═══ -->
+  <div class="win bevel-out hidden" id="contact-win" style="left:150px;top:90px;width:320px;z-index:230;">
+    <div class="title-bar" id="contact-win-tb">
+      <div class="title-bar-text">
+        <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24"
+          viewBox="0 -960 960 960" width="24">
+          <path
+            d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z" />
+        </svg>
+        Contact — NOX.Ventures
+      </div>
+      <div class="win-controls">
+        <button class="bevel-btn win-btn" onclick="minimizeWin('contact-win')">_</button>
+        <button class="bevel-btn win-btn" onclick="maximizeWin('contact-win')">□</button>
+        <button class="bevel-btn win-btn" onclick="closeWin('contact-win')">✕</button>
+      </div>
+    </div>
+    <div class="win-menubar"><span>File</span><span>View</span></div>
+    <div class="win-body" style="padding:0;">
+      <div style="background:#00003c;padding:12px 16px;position:relative;overflow:hidden;">
+        <div
+          style="position:absolute;inset:0;background:url('images/nox-bg.jpeg') center/cover;opacity:.12;pointer-events:none;">
+        </div>
+        <div style="position:relative;z-index:1;">
+          <div style="font-size:9px;color:#6666bb;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;">
+            NOX.VENTURES // GET IN TOUCH</div>
+          <div style="font-size:14px;font-weight:900;color:#fff;">REACH US</div>
+        </div>
+      </div>
+      <!-- Email -->
+      <a class="contact-btn" href="mailto:info@nox.ventures">
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+          <rect width="40" height="40" fill="#00003c" />
+          <rect x="7" y="12" width="26" height="18" fill="#000080" />
+          <path d="M7 12 L20 22 L33 12" stroke="#ffffff" stroke-width="2" fill="none" />
+          <line x1="7" y1="30" x2="33" y2="30" stroke="#4444aa" stroke-width="1" />
+        </svg>
+        <div>
+          <div class="contact-label">Email</div>
+          <div class="contact-sub">info@nox.ventures</div>
+        </div>
+      </a>
+      <!-- X -->
+      <a class="contact-btn" href="https://x.com/NOX_Ventures" target="_blank" rel="noopener">
+        <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+          <rect width="40" height="40" fill="#00003c" />
+          <path
+            d="M22.6 18.4L30.8 9h-2l-7.1 8.2L15.8 9H9l8.6 12.4L9 31h2l7.5-8.7L24.2 31H31L22.6 18.4zm-2.7 3.1l-.9-1.3-7-10h3l5.6 8 .9 1.3 7.2 10.3h-3l-5.8-8.3z"
+            fill="#ffffff" />
+        </svg>
+        <div>
+          <div class="contact-label">X</div>
+          <div class="contact-sub">@NOX_Ventures</div>
+        </div>
+      </a>
+    </div>
+    <div class="win-statusbar"><span>2 channels available</span><span>info@nox.ventures</span></div>
+  </div>
+
+  <!-- ═══ TERMINAL (decorative) ═══ -->
+  <div class="win bevel-out" id="terminal-win" style="left:100px;bottom:44px;width:310px;z-index:190;">
+    <div class="title-bar" id="terminal-win-tb">
+      <div class="title-bar-text">
+        <svg width="13" height="13" style="display:inline-block;vertical-align:middle;" fill="currentColor" height="24"
+          viewBox="0 -960 960 960" width="24">
+          <path
+            d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H160v400Zm140-40-56-56 103-104-104-104 57-56 160 160-160 160Zm180 0v-80h240v80H480Z" />
+        </svg>
+        NOX Terminal v1.0
+      </div>
+      <div class="win-controls">
+        <button class="bevel-btn win-btn" onclick="minimizeWin('terminal-win')">_</button>
+        <button class="bevel-btn win-btn" onclick="maximizeWin('terminal-win')">□</button>
+        <button class="bevel-btn win-btn" onclick="closeWin('terminal-win')">✕</button>
+      </div>
+    </div>
+    <div class="win-body bevel-in"
+      style="background:#000820;padding:10px;font-size:10px;color:#00ff41;font-family:monospace;line-height:1.85;">
+      <div>NOX VENTURES SYSTEM v1.0.0</div>
+      <div>Copyright (C) 2025 NOX Ventures. All rights reserved.</div>
+      <div style="margin-top:6px;color:#aaaaff;">&gt; Loading portfolio data...............<span
+          style="color:#00ff41;">OK</span></div>
+      <div style="color:#aaaaff;">&gt; Scanning deal flow...................<span style="color:#00ff41;">97
+          signals</span></div>
+      <div style="color:#aaaaff;">&gt; CEX partners online...................<span style="color:#00ff41;">20+</span>
+      </div>
+      <div style="color:#aaaaff;">&gt; Capital deployed YTD.................<span style="color:#ffff00;">$120M+</span>
+      </div>
+      <div style="margin-top:4px;">C:\NOX&gt;<span
+          style="display:inline-block;width:7px;height:12px;background:#00ff41;animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ START MENU ═══ -->
+  <div id="start-menu">
+    <div class="sm-strip">NOX.Ventures</div>
+    <div class="sm-body">
+      <div class="sm-item" onclick="openWin('about-win');closeStart()">
+        <svg width="18" height="18" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+          <rect x="4" y="3" width="30" height="22" rx="2" fill="#c0c0c0" stroke="#808080" stroke-width="1" />
+          <rect x="6" y="5" width="26" height="17" rx="1" fill="#808080" />
+          <rect x="7" y="6" width="24" height="15" fill="#000080" />
+          <rect x="16" y="25" width="6" height="4" fill="#808080" />
+          <rect x="11" y="29" width="16" height="3" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1" />
+          <rect x="13" y="33" width="12" height="4" rx="1" fill="#c0c0c0" stroke="#808080" stroke-width="1" />
+          <circle cx="23" cy="35" r="0.7" fill="#00cc00" />
+        </svg>
+        About us
+      </div>
+      <div class="sm-item" onclick="openWin('portfolio-win');closeStart()"><svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h240l80 80h320q33 0 56.5 23.5T880-640v400q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H447l-80-80H160v480Zm0 0v-480 480Z" />
+        </svg>Portfolio</div>
+      <div class="sm-item" onclick="openWin('services-win');closeStart()"><svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="m741-600-44-96-96-44 96-44 44-96 44 96 96 44-96 44-44 96Zm80 280-32-68-68-32 68-32 32-68 32 68 68 32-68 32-32 68ZM301-80l-12-94q-7-3-15-8t-13-10l-88 38-99-174 75-56v-32l-75-56 99-174 88 38q5-5 13-10t15-8l12-94h200l12 94q7 3 15 8t13 10l88-38 99 174-75 56v32l75 56-99 174-88-38q-5 5-13 10t-15 8l-12 94H301Zm185-235q35-35 35-85t-35-85q-35-35-85-35t-85 35q-35 35-35 85t35 85q35 35 85 35t85-35ZM371-160h60l8-72q29-8 49.5-20.5T529-286l66 30 28-50-58-44q8-23 8-50t-8-50l58-44-28-50-66 30q-20-21-40.5-33.5T439-568l-8-72h-60l-8 72q-29 8-49.5 20.5T273-514l-66-30-28 50 58 44q-8 23-8.5 50t8.5 50l-58 44 28 50 66-30q20 21 40.5 33.5T363-232l8 72Zm30-240Z" />
+        </svg>Services</div>
+      <div class="sm-item" onclick="openWin('insights-win');closeStart()"><svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+        </svg>Insights</div>
+      <div class="sm-item" onclick="openWin('contact-win');closeStart()"><svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm320-280L160-640v400h640v-400L480-440Zm0-80 320-200H160l320 200ZM160-640v-80 480-400Z" />
+        </svg>Contact</div>
+      <div class="sm-item" onclick="openWin('terminal-win');closeStart()"><svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-400H160v400Zm140-40-56-56 103-104-104-104 57-56 160 160-160 160Zm180 0v-80h240v80H480Z" />
+        </svg>Terminal</div>
+      <div class="sm-divider"></div>
+      <div class="sm-item" onclick="closeStart()"><svg width="20" height="20"
+          style="display:inline-block;vertical-align:middle;flex-shrink:0;color:currentColor;fill:currentColor;"
+          fill="currentColor" height="24" viewBox="0 -960 960 960" width="24">
+          <path
+            d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-84 31.5-156.5T197-763l56 56q-44 44-68.5 102T160-480q0 134 93 227t227 93q134 0 227-93t93-227q0-67-24.5-125T707-707l56-56q54 54 85.5 126.5T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm-40-360v-440h80v440h-80Z" />
+        </svg>Shut Down</div>
+    </div>
+  </div>
+
+  <!-- ═══ TASKBAR ═══ -->
+  <div id="taskbar">
+    <button class="bevel-btn" id="start-btn" onclick="toggleStart()"
+      style="height:24px;padding:0 10px;font-weight:900;font-size:11px;font-style:italic;display:flex;align-items:center;gap:5px;flex-shrink:0;color:#000;">
+      <span style="font-size:15px;">⊞</span> Start
+    </button>
+    <div class="tb-sep"></div>
+    <div id="tb-items" style="display:flex;gap:2px;flex:1;overflow:hidden;align-items:center;height:100%;"></div>
+    <div class="tb-sep"></div>
+    <!-- BTC + ETH prices + clock -->
+    <div class="bevel-in"
+      style="background:#c0c0c0;height:24px;padding:0 10px;display:flex;align-items:center;gap:10px;font-size:10px;font-weight:700;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:3px;">
+        <span class="ticker-label">BTC</span>
+        <span class="ticker-val" id="tick-btc">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:3px;">
+        <span class="ticker-label">ETH</span>
+        <span class="ticker-val" id="tick-eth">—</span>
+      </div>
+      <div class="tb-sep" style="height:18px;"></div>
+      <span id="clock" style="font-size:10px;font-weight:700;">--:--</span>
+    </div>
+  </div>
+
+  <!-- BG watermark -->
+  <div
+    style="position:fixed;bottom:44px;right:8px;opacity:.28;pointer-events:none;text-align:right;font-size:9px;font-family:monospace;color:#fff;text-transform:uppercase;line-height:1.9;letter-spacing:.07em;">
+    SYSTEM READY — NOX.VENTURES (C) 2025<br />
+    ALL SYSTEMS NOMINAL // INCUBATION IN PROGRESS<br />
+    BUILD: 2025.04.06 // KERNEL: SOVEREIGN-1.0
+  </div>
+
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script>
+    /* ── Registry ── */
+    const WINS = {
+      'about-win': { title: 'About us', icon: 'info' },
+      'portfolio-win': { title: 'Portfolio', icon: 'folder' },
+      'services-win': { title: 'Services', icon: 'settings_suggest' },
+      'insights-win': { title: 'Insights', icon: 'article' },
+      'contact-win': { title: 'Contact', icon: 'mail' },
+      'terminal-win': { title: 'Terminal', icon: 'terminal' },
+    };
+    const _min = {};
+    let zTop = 300;
+
+    function bringToFront(id) { zTop++; document.getElementById(id).style.zIndex = zTop; renderTB(); }
+
+    function openWin(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove('hidden');
+      if (_min[id]) {
+        Object.assign(el.style, { left: _min[id].l, top: _min[id].t, width: _min[id].w, height: _min[id].h || '' });
+        delete _min[id];
+      }
+      bringToFront(id);
+    }
+    function closeWin(id) { document.getElementById(id).classList.add('hidden'); renderTB(); }
+    function minimizeWin(id) {
+      const el = document.getElementById(id);
+      _min[id] = { l: el.style.left, t: el.style.top, w: el.style.width, h: el.style.height };
+      el.classList.add('hidden'); renderTB();
+    }
+    function maximizeWin(id) {
+      const el = document.getElementById(id);
+      if (el.dataset.mx === '1') {
+        Object.assign(el.style, { left: el.dataset.pl, top: el.dataset.pt, width: el.dataset.pw, height: el.dataset.ph || '', maxHeight: el.dataset.pmh || '', transform: el.dataset.ptr || '' });
+        el.dataset.mx = '0';
+      } else {
+        Object.assign(el.dataset, { pl: el.style.left, pt: el.style.top, pw: el.style.width, ph: el.style.height, pmh: el.style.maxHeight || '', ptr: el.style.transform || '' });
+        Object.assign(el.style, { left: '0px', top: '0px', width: '100vw', height: 'auto', maxHeight: 'calc(100vh - 32px)', transform: 'none' });
+        el.dataset.mx = '1';
+      }
+      bringToFront(id);
+    }
+
+    /* ── Taskbar ── */
+    function renderTB() {
+      const c = document.getElementById('tb-items');
+      c.innerHTML = '';
+      for (const [id, meta] of Object.entries(WINS)) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const hidden = el.classList.contains('hidden');
+        const btn = document.createElement('div');
+        btn.style.cssText = `height:24px;padding:0 8px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;min-width:80px;max-width:130px;overflow:hidden;white-space:nowrap;background:#c0c0c0;${hidden ? 'border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #5d5e5f;border-bottom:2px solid #5d5e5f;' : 'border-top:2px solid #5d5e5f;border-left:2px solid #5d5e5f;border-right:2px solid #fff;border-bottom:2px solid #fff;'}`;
+        btn.innerHTML = `<img src="icons/${meta.icon}.svg" width="12" height="12" style="display:inline-block;vertical-align:middle;margin-right:2px;" />${meta.title}`;
+        btn.onclick = () => hidden ? openWin(id) : minimizeWin(id);
+        c.appendChild(btn);
+      }
+    }
+
+    /* ── Drag ── */
+    function makeDraggable(id) {
+      const win = document.getElementById(id);
+      const tb = document.getElementById(id + '-tb');
+      if (!win || !tb) return;
+      tb.addEventListener('mousedown', e => {
+        if (e.target.classList.contains('win-btn') || e.target.classList.contains('bevel-btn')) return;
+        bringToFront(id);
+        const r = win.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
+        const mv = ev => { win.style.left = Math.max(0, ev.clientX - ox) + 'px'; win.style.top = Math.max(0, ev.clientY - oy) + 'px'; };
+        const up = () => { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); };
+        document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up); e.preventDefault();
+      });
+      win.addEventListener('mousedown', () => bringToFront(id));
+    }
+    for (const id of Object.keys(WINS)) makeDraggable(id);
+
+    /* ── Icon select ── */
+    function selIcon(el) { document.querySelectorAll('.desk-icon').forEach(i => i.classList.remove('selected')); el.classList.add('selected'); }
+
+    /* ── Start menu ── */
+    let _so = false;
+    function toggleStart() { _so = !_so; document.getElementById('start-menu').classList.toggle('open', _so); }
+    function closeStart() { _so = false; document.getElementById('start-menu').classList.remove('open'); }
+    document.addEventListener('click', e => { if (_so && !e.target.closest('#start-menu') && !e.target.closest('#start-btn')) closeStart(); });
+
+    /* ── Clock ── */
+    function tick() {
+      const n = new Date();
+      document.getElementById('clock').textContent = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+    }
+    tick(); setInterval(tick, 15000);
+
+    /* ── Live BTC & ETH — Binance WebSocket (real-time, no CORS) ── */
+    (function startTicker() {
+      const prevPrices = { btcusdt: null, ethusdt: null };
+
+      function updateEl(sym, price) {
+        const id = sym === 'btcusdt' ? 'tick-btc' : 'tick-eth';
+        const el = document.getElementById(id);
+        const prev = prevPrices[sym];
+        prevPrices[sym] = price;
+        el.textContent = '$' + price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        el.className = 'ticker-val ' + (prev === null || price >= prev ? 'ticker-up' : 'ticker-dn');
+      }
+
+      function connect() {
+        const ws = new WebSocket(
+          'wss://stream.binance.com:9443/stream?streams=btcusdt@miniTicker/ethusdt@miniTicker'
+        );
+        ws.onmessage = e => {
+          try {
+            const { data } = JSON.parse(e.data);
+            if (!data) return;
+            const sym = data.s.toLowerCase();
+            const price = parseFloat(data.c);
+            if (sym === 'btcusdt' || sym === 'ethusdt') updateEl(sym, price);
+          } catch (_) { }
+        };
+        ws.onerror = ws.onclose = () => {
+          // reconnect after 5s if disconnected
+          setTimeout(connect, 5000);
+        };
+      }
+
+      connect();
+    })();
+
+    /* ── Typing effect — 3 separate paragraphs ── */
+    const PARAS = [
+      "We live on the frontier of Web3 and believe in progress through innovation.",
+      "We partner with ambitious teams from the earliest stages, acting as strategic co-founders to guide projects from idea to exchange listing.",
+      "If you're building something ambitious at the frontier of Web3, come build with us."
+    ];
+
+    function typeParas() {
+      const cursor = document.getElementById('terminal-cursor');
+      const els = ['para1', 'para2', 'para3'].map(id => document.getElementById(id));
+      let pi = 0, ci = 0;
+
+      els.forEach(e => { e.textContent = ''; e.style.display = 'none'; });
+      els[0].style.display = '';
+      cursor.style.display = 'inline-block';
+      // place cursor after para[0]
+      els[0].after(cursor);
+
+      const iv = setInterval(() => {
+        const txt = PARAS[pi];
+        if (ci < txt.length) {
+          els[pi].textContent += txt[ci++];
+        } else {
+          pi++;
+          if (pi < PARAS.length) {
+            ci = 0;
+            els[pi].style.display = '';
+            els[pi].after(cursor); // move cursor after the new paragraph
+          } else {
+            clearInterval(iv);
+            cursor.style.display = 'none';
+          }
+        }
+      }, 22);
+    }
+
+    window.addEventListener('load', () => {
+      renderTB();
+      setTimeout(typeParas, 600);
+    });
+  </script>
 </body>
+
 </html>
